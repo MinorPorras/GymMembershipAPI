@@ -1,0 +1,6 @@
+@GymMembershipAPI_HostAddress = http://localhost:5218
+
+GET {{GymMembershipAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

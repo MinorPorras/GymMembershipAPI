@@ -1,0 +1,15 @@
+﻿services:
+  gym-db:
+    image: postgres:15-alpine
+    container_name: gym_postgres_db
+    environment:
+      POSTGRES_DB: GymDb
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: minorp200304.
+    ports:
+      - "5432:5432"
+    volumes:
+      - gym_data:/var/lib/postgresql/data
+
+volumes:
+  gym_data:
