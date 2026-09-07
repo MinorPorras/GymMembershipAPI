@@ -3,5 +3,5 @@
 public record MemberRequestDto(
     string Name,
     string Email,
-    string Telefono
+    string Phone
 );

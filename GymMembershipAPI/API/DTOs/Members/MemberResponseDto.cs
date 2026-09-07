@@ -4,6 +4,6 @@ public record MemberResponseDto(
     Guid PublicId,
     string Name,
     string Email,
-    string Telefono,
+    string Phone,
     bool IsActive
 );

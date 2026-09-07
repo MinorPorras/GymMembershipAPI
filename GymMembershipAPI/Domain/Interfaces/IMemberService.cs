@@ -8,5 +8,4 @@ public interface IMemberService : IServiceBase<Member>
 {
     public Task<Result<Member>> CreateAsync(MemberRequestDto requestDto);
     public Task<Result<Member>> UpdateAsync(Guid publicId, MemberRequestDto dto);
-    public Task<Result> InvertState(Guid publicId);
 }

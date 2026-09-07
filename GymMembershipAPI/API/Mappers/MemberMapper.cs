@@ -11,7 +11,7 @@ public class MemberMapper
         {
             Name = requestDto.Name,
             Email = requestDto.Email,
-            Phone = requestDto.Telefono,
+            Phone = requestDto.Phone,
         };
     }
 
@@ -21,7 +21,7 @@ public class MemberMapper
             PublicId: entity.PublicId,
             Name: entity.Name,
             Email: entity.Email,
-            Telefono: entity.Phone,
+            Phone: entity.Phone,
             IsActive: entity.IsActive
         );
     }
