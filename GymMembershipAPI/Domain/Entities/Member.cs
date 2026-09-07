@@ -3,7 +3,7 @@
 public class Member
 {
     public int Id { get; set; }
-    public Guid PublicId { get; set; }
+    public Guid PublicId { get; set; } = Guid.NewGuid();
     public string Name { get; set; }
     public string Email { get; set; }
     public string telefono { get; set; }

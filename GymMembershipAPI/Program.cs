@@ -1,3 +1,5 @@
+using GymMembershipAPI.API.Services;
+using GymMembershipAPI.Domain.Interfaces;
 using GymMembershipAPI.Infraestructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -10,6 +12,8 @@ builder.Services.AddControllers();
 
 builder.Services.AddDbContext<GymDbContext>(options =>
     options.UseNpgsql("Host=localhost;Port=5432;Database=GymDb;Username=admin;Password=minorp200304."));
+
+builder.Services.AddScoped<IMembershipTypeService, MembershipTypeService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApi();

@@ -18,6 +18,7 @@ namespace GymMembershipAPI.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    PublicId = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "text", nullable: false),
                     Instructor = table.Column<string>(type: "text", nullable: false),
                     DateHour = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
@@ -34,9 +35,10 @@ namespace GymMembershipAPI.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    PublicId = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     Price = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
-                    MonthDurantion = table.Column<int>(type: "integer", nullable: false)
+                    DurationMonths = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -49,6 +51,7 @@ namespace GymMembershipAPI.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    PublicId = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "character varying(150)", maxLength: 150, nullable: false),
                     Email = table.Column<string>(type: "character varying(150)", maxLength: 150, nullable: false),
                     telefono = table.Column<string>(type: "text", nullable: false),
@@ -74,6 +77,7 @@ namespace GymMembershipAPI.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    PublicId = table.Column<Guid>(type: "uuid", nullable: false),
                     MemberId = table.Column<int>(type: "integer", nullable: false),
                     GroupClassId = table.Column<int>(type: "integer", nullable: false),
                     BookingDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
@@ -102,6 +106,7 @@ namespace GymMembershipAPI.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    PublicId = table.Column<Guid>(type: "uuid", nullable: false),
                     MemberId = table.Column<int>(type: "integer", nullable: false),
                     AccessDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     AllowAccess = table.Column<bool>(type: "boolean", nullable: false)
@@ -129,9 +134,27 @@ namespace GymMembershipAPI.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_Bookings_PublicId",
+                table: "Bookings",
+                column: "PublicId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Members_MembershipTypeId",
                 table: "Members",
                 column: "MembershipTypeId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Members_PublicId",
+                table: "Members",
+                column: "PublicId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_MembershipTypes_PublicId",
+                table: "MembershipTypes",
+                column: "PublicId",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_RegisterAccesses_MemberId",

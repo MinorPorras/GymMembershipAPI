@@ -1,27 +1,38 @@
 ﻿using GymMembershipAPI.API.DTOs;
+using GymMembershipAPI.API.DTOs.MembershipType;
 using GymMembershipAPI.Domain.Entities;
 
 namespace GymMembershipAPI.API.Mappers;
 
 public class MembershipTypeMapper
 {
-    public static MembershipType ToEntity(CreateMemberShipTypeDto dto)
+    public static MembershipType ToEntity(CreateMembershipTypeDto dto)
     {
         return new MembershipType
         {
-            Name = dto.name,
-            Price = dto.price,
-            MonthDurantion = dto.monthDurantion
+            Name = dto.Name,
+            Price = dto.Price,
+            DurationMonths = dto.DurationMonths
+        };
+    }
+
+    public static MembershipType ToEntity(UpdateMembershipTypeDto dto)
+    {
+        return new MembershipType
+        {
+            Name = dto.Name,
+            Price = dto.Price,
+            DurationMonths = dto.DurationMonths
         };
     }
 
     public static MembershipTypeResponseDto ToResponseDto(MembershipType entity)
     {
         return new MembershipTypeResponseDto(
-            entity.Id,
+            entity.PublicId,
             entity.Name,
             entity.Price,
-            entity.MonthDurantion
+            entity.DurationMonths
         );
     }
 

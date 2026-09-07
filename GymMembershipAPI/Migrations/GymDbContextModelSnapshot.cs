@@ -3,7 +3,6 @@ using System;
 using GymMembershipAPI.Infraestructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,11 +11,9 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace GymMembershipAPI.Migrations
 {
     [DbContext(typeof(GymDbContext))]
-    [Migration("20260905035149_addPublicId")]
-    partial class addPublicId
+    partial class GymDbContextModelSnapshot : ModelSnapshot
     {
-        /// <inheritdoc />
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -42,8 +39,8 @@ namespace GymMembershipAPI.Migrations
                     b.Property<int>("MemberId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("PublicId")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("PublicId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("State")
                         .IsRequired()
@@ -84,8 +81,8 @@ namespace GymMembershipAPI.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("PublicId")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("PublicId")
+                        .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
@@ -119,8 +116,8 @@ namespace GymMembershipAPI.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("character varying(150)");
 
-                    b.Property<int>("PublicId")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("PublicId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("timestamp with time zone");
@@ -147,7 +144,7 @@ namespace GymMembershipAPI.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("MonthDurantion")
+                    b.Property<int>("DurationMonths")
                         .HasColumnType("integer");
 
                     b.Property<string>("Name")
@@ -159,8 +156,8 @@ namespace GymMembershipAPI.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)");
 
-                    b.Property<int>("PublicId")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("PublicId")
+                        .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
@@ -187,8 +184,8 @@ namespace GymMembershipAPI.Migrations
                     b.Property<int>("MemberId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("PublicId")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("PublicId")
+                        .HasColumnType("uuid");
 
                     b.HasKey("Id");
 

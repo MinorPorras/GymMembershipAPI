@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace GymMembershipAPI.Migrations
 {
     [DbContext(typeof(GymDbContext))]
-    [Migration("20260904043325_InitialCreate")]
+    [Migration("20260906225746_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -42,6 +42,9 @@ namespace GymMembershipAPI.Migrations
                     b.Property<int>("MemberId")
                         .HasColumnType("integer");
 
+                    b.Property<Guid>("PublicId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("State")
                         .IsRequired()
                         .HasColumnType("text");
@@ -49,6 +52,9 @@ namespace GymMembershipAPI.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("GroupClassId");
+
+                    b.HasIndex("PublicId")
+                        .IsUnique();
 
                     b.HasIndex("MemberId", "GroupClassId")
                         .IsUnique();
@@ -77,6 +83,9 @@ namespace GymMembershipAPI.Migrations
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<Guid>("PublicId")
+                        .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
@@ -110,6 +119,9 @@ namespace GymMembershipAPI.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("character varying(150)");
 
+                    b.Property<Guid>("PublicId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("timestamp with time zone");
 
@@ -120,6 +132,9 @@ namespace GymMembershipAPI.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("MembershipTypeId");
+
+                    b.HasIndex("PublicId")
+                        .IsUnique();
 
                     b.ToTable("Members");
                 });
@@ -132,7 +147,7 @@ namespace GymMembershipAPI.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("MonthDurantion")
+                    b.Property<int>("DurationMonths")
                         .HasColumnType("integer");
 
                     b.Property<string>("Name")
@@ -144,7 +159,13 @@ namespace GymMembershipAPI.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)");
 
+                    b.Property<Guid>("PublicId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("PublicId")
+                        .IsUnique();
 
                     b.ToTable("MembershipTypes");
                 });
@@ -165,6 +186,9 @@ namespace GymMembershipAPI.Migrations
 
                     b.Property<int>("MemberId")
                         .HasColumnType("integer");
+
+                    b.Property<Guid>("PublicId")
+                        .HasColumnType("uuid");
 
                     b.HasKey("Id");
 

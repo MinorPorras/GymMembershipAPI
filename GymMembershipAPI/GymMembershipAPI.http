@@ -1,6 +1,46 @@
-@GymMembershipAPI_HostAddress = http://localhost:5218
+@baseUrl = http://localhost:5218/api/membershiptypes
 
-GET {{GymMembershipAPI_HostAddress}}/weatherforecast/
-Accept: application/json
+### 1. Crear una nueva Membresía (POST)
+POST {{baseUrl}}
+Content-Type: application/json
 
-###
+{
+  "name": "Mensual Básico",
+  "price": 29.99,
+  "durationMonths": 1
+}
+### Membresía 1 guid: 54f938db-2b2d-47ea-8754-ec78bb4cc7bd
+
+### 2. Crear otra Membresía (para tener datos)
+POST {{baseUrl}}
+Content-Type: application/json
+
+{
+  "name": "Anual VIP",
+  "price": 299.99,
+  "durationMonths": 12
+}
+### Membresía 2 guid: 137a94d5-a122-4612-898f-464f209a31f3
+
+
+### 3. Obtener todas las Membresías (GET)
+GET {{baseUrl}}
+
+### 4. Obtener por PublicId (GET)
+### ⚠️ IMPORTANTE: Reemplaza el GUID de abajo con el "publicId" que te devolvió el POST
+GET {{baseUrl}}/137a94d5-a122-4612-898f-464f209a31f3
+
+### 5. Actualizar una Membresía (PUT)
+### ⚠️ IMPORTANTE: Reemplaza el GUID y el JSON con los datos que quieras actualizar
+PUT {{baseUrl}}/54f938db-2b2d-47ea-8754-ec78bb4cc7bd
+Content-Type: application/json
+
+{
+  "name": "Mensual Premium",
+  "price": 49.99,
+  "durationMonths": 1
+}
+
+### 6. Eliminar una Membresía (DELETE)
+### ⚠️ IMPORTANTE: Reemplaza el GUID con el que quieras borrar
+DELETE {{baseUrl}}/54f938db-2b2d-47ea-8754-ec78bb4cc7bd
