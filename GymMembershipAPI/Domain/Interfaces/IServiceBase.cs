@@ -6,4 +6,5 @@ public interface IServiceBase<T> where T : class
 {
     public Task<Result<T>> GetByPublicIdAsync(Guid publicId);
     public Task<Result<List<T>>> GetAllAsync();
+    public Task<Result> DeleteAsync(Guid publicId);
 }

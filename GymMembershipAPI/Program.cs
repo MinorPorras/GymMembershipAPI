@@ -14,6 +14,7 @@ builder.Services.AddDbContext<GymDbContext>(options =>
     options.UseNpgsql("Host=localhost;Port=5432;Database=GymDb;Username=admin;Password=minorp200304."));
 
 builder.Services.AddScoped<IMembershipTypeService, MembershipTypeService>();
+builder.Services.AddScoped<IMemberService, MemberService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApi();

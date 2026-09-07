@@ -6,23 +6,13 @@ namespace GymMembershipAPI.API.Mappers;
 
 public class MembershipTypeMapper
 {
-    public static MembershipType ToEntity(CreateMembershipTypeDto dto)
+    public static MembershipType ToEntity(MembershipTypeRequestDto requestDto)
     {
         return new MembershipType
         {
-            Name = dto.Name,
-            Price = dto.Price,
-            DurationMonths = dto.DurationMonths
-        };
-    }
-
-    public static MembershipType ToEntity(UpdateMembershipTypeDto dto)
-    {
-        return new MembershipType
-        {
-            Name = dto.Name,
-            Price = dto.Price,
-            DurationMonths = dto.DurationMonths
+            Name = requestDto.Name,
+            Price = requestDto.Price,
+            DurationMonths = requestDto.DurationMonths
         };
     }
 

@@ -26,12 +26,6 @@ public class GymDbContext : DbContext
             entity.HasIndex(e => e.PublicId).IsUnique();
             entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
             entity.Property(e => e.Price).HasPrecision(18, 2);
-
-            //Relación 
-            entity.HasMany(e => e.Members)
-                .WithOne(e => e.MembershipType)
-                .HasForeignKey(e => e.MembershipTypeId)
-                .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<Member>(entity =>
@@ -39,10 +33,25 @@ public class GymDbContext : DbContext
             entity.HasIndex(e => e.PublicId).IsUnique();
             entity.Property(e => e.Name).IsRequired().HasMaxLength(150);
             entity.Property(e => e.Email).IsRequired().HasMaxLength(150);
-            
+
             entity.HasMany(e => e.RegisterAccesses)
                 .WithOne(e => e.Member)
                 .HasForeignKey(e => e.MemberId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Membership>(entity =>
+        {
+            entity.HasIndex(e => e.PublicId).IsUnique();
+            
+            entity.HasOne(e => e.Member)
+                .WithMany(e => e.Memberships)
+                .HasForeignKey(e => e.MemberId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasOne(e => e.MembershipType)
+                .WithMany()
+                .HasForeignKey(e => e.MembershipTypeId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
@@ -54,7 +63,7 @@ public class GymDbContext : DbContext
             entity.HasOne(e => e.Member)
                 .WithMany(e => e.Bookings)
                 .HasForeignKey(e => e.MemberId);
-            
+
             entity.HasOne(e => e.GroupClass)
                 .WithMany(e => e.Bookings)
                 .HasForeignKey(e => e.GroupClassId);

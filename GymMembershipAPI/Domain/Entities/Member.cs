@@ -2,21 +2,19 @@
 
 public class Member
 {
+    public Member() { }
+
     public int Id { get; set; }
     public Guid PublicId { get; set; } = Guid.NewGuid();
     public string Name { get; set; }
     public string Email { get; set; }
-    public string telefono { get; set; }
-    
+    public string Phone { get; set; }
+    public bool IsActive => Memberships.Any(m => m.EndDate >= DateTime.UtcNow && m.IsActive);
+
     //Relacion con tipo membresía
-    public int MembershipTypeId { get; set; }
-    public MembershipType MembershipType { get; set; }
-    
-    public DateTime StartDate { get; set; }
-    public DateTime EndDate { get; set; }
-    public bool IsActive { get; set; }
+    public ICollection<Membership>  Memberships { get; set; } = new List<Membership>();
     
     //Navegacion
-    public ICollection<Booking>  Bookings { get; set; }
+    public ICollection<Booking> Bookings { get; set; }
     public ICollection<RegisterAccess> RegisterAccesses { get; set; }
 }

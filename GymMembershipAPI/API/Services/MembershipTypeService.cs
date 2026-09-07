@@ -17,28 +17,15 @@ public class MembershipTypeService(GymDbContext context) : IMembershipTypeServic
     private readonly GymDbContext _context = context;
 
     // Validation
-    private static Result ValidateDto(CreateMembershipTypeDto dto)
+    private static Result ValidateDto(MembershipTypeRequestDto requestDto)
     {
-        if (IsNullOrWhiteSpace(dto.Name))
+        if (IsNullOrWhiteSpace(requestDto.Name))
             return Result.Failure(MembershipTypeErrors.InvalidName);
 
-        if (dto.Price <= 0)
+        if (requestDto.Price <= 0)
             return Result.Failure(MembershipTypeErrors.InvalidPrice);
 
-        if (dto.DurationMonths <= 0)
-            return Result.Failure(MembershipTypeErrors.InvalidMonthDuration);
-
-        return Result.Success();
-    }
-    private static Result ValidateDto(UpdateMembershipTypeDto dto)
-    {
-        if (IsNullOrWhiteSpace(dto.Name))
-            return Result.Failure(MembershipTypeErrors.InvalidName);
-
-        if (dto.Price <= 0)
-            return Result.Failure(MembershipTypeErrors.InvalidPrice);
-
-        if (dto.DurationMonths <= 0)
+        if (requestDto.DurationMonths <= 0)
             return Result.Failure(MembershipTypeErrors.InvalidMonthDuration);
 
         return Result.Success();
@@ -63,16 +50,16 @@ public class MembershipTypeService(GymDbContext context) : IMembershipTypeServic
         return Result<List<MembershipType>>.Success(list);
     }
 
-    public async Task<Result<MembershipType>> CreateAsync(CreateMembershipTypeDto dto)
+    public async Task<Result<MembershipType>> CreateAsync(MembershipTypeRequestDto requestDto)
     {
-        var hasValidData = ValidateDto(dto);
+        var hasValidData = ValidateDto(requestDto);
         if (hasValidData.IsFailure)
             return Result<MembershipType>.Failure(hasValidData.Error);
         
-        if (await ExistsByNameAsync(dto.Name)) 
+        if (await ExistsByNameAsync(requestDto.Name)) 
             return Result<MembershipType>.Failure(MembershipTypeErrors.AlreadyExists);
 
-        var entity = MembershipTypeMapper.ToEntity(dto);
+        var entity = MembershipTypeMapper.ToEntity(requestDto);
         try
         {
             await _context.MembershipTypes.AddAsync(entity);
@@ -86,7 +73,7 @@ public class MembershipTypeService(GymDbContext context) : IMembershipTypeServic
         }
     }
 
-    public async Task<Result<MembershipType>> UpdateAsync(Guid publicId, UpdateMembershipTypeDto dto)
+    public async Task<Result<MembershipType>> UpdateAsync(Guid publicId, MembershipTypeRequestDto dto)
     {
         var hasValidData = ValidateDto(dto);
         if (hasValidData.IsFailure)

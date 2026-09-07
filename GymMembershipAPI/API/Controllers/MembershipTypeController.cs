@@ -40,9 +40,9 @@ public class MembershipTypeController(IMembershipTypeService service) : Controll
 
     // POST
     [HttpPost]
-    public async Task<IActionResult> CreateMembershipType([FromBody]CreateMembershipTypeDto newTypeDto)
+    public async Task<IActionResult> CreateMembershipType([FromBody]MembershipTypeRequestDto newTypeRequestDto)
     {
-        var result = await _service.CreateAsync(newTypeDto);
+        var result = await _service.CreateAsync(newTypeRequestDto);
         if (result.IsFailure) return Conflict(result.Error.message);
         var response = MembershipTypeMapper.ToResponseDto(result.Value);
         return CreatedAtAction(nameof(GetMembershipTypesForPublicId), 
@@ -52,7 +52,7 @@ public class MembershipTypeController(IMembershipTypeService service) : Controll
 
     // PATCH
     [HttpPut("{publicId}")]
-    public async Task<IActionResult> UpdateMembershipType([FromRoute] Guid publicId, [FromBody] UpdateMembershipTypeDto updatedTypeDto)
+    public async Task<IActionResult> UpdateMembershipType([FromRoute] Guid publicId, [FromBody] MembershipTypeRequestDto updatedTypeDto)
     {
         var result = await _service.UpdateAsync(publicId, updatedTypeDto);
         if (result.IsFailure) 
