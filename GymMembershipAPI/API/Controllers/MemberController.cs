@@ -1,0 +1,75 @@
+﻿using GymMembershipAPI.API.DTOs.Members;
+using GymMembershipAPI.API.Mappers;
+using GymMembershipAPI.API.Services;
+using GymMembershipAPI.Domain.Entities;
+using GymMembershipAPI.Domain.results;
+using Microsoft.AspNetCore.Mvc;
+
+namespace GymMembershipAPI.API.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class MemberController(MemberService service) : Controller
+{
+    private MemberService _service = service;
+
+    // GET
+    public IActionResult Index()
+    {
+        return View();
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetAll()
+    {
+        var result = await _service.GetAllAsync();
+        if (result.IsFailure) return BadRequest(result.Error.message);
+        var dtoList = MemberMapper.ToResponseDto(result.Value);
+        return Ok(dtoList);
+    }
+
+    [HttpGet("{publicId}")]
+    public async Task<IActionResult> GetByPublicId(Guid publicId)
+    {
+        var result = await _service.GetByPublicIdAsync(publicId);
+        if (result.IsFailure) return BadRequest(result.Error.message);
+        var dto = MemberMapper.ToResponseDto(result.Value);
+        return Ok(dto);
+    }
+
+    //POST
+    [HttpPost]
+    public async Task<IActionResult> CreateAsync([FromBody] MemberRequestDto dto)
+    {
+        var result = await _service.CreateAsync(dto);
+        if (result.IsFailure) return BadRequest(result.Error.message);
+        var response = MemberMapper.ToResponseDto(result.Value);
+        return CreatedAtAction(nameof(CreateAsync),
+            response.PublicId,
+            response);
+    }
+
+    // PUT
+    [HttpPut("{publicId}")]
+    public async Task<IActionResult> UpdateAsync([FromRoute] Guid publicId, [FromBody] MemberRequestDto dto)
+    {
+        var result = await _service.UpdateAsync(publicId, dto);
+        if (result.IsFailure)
+            return result.Error.code == "Member.NotFound"
+                ? NotFound(result.Error.message)
+                : BadRequest(result.Error.message);
+
+        var response = MemberMapper.ToResponseDto(result.Value);
+        return Ok(response);
+    }
+
+    //DELETE
+    [HttpDelete(("{publicId}"))]
+    public async Task<IActionResult> DeleteAsync([FromRoute] Guid publicId)
+    {
+        var result = await _service.DeleteAsync(publicId);
+        return result.IsFailure
+            ? BadRequest(result.Error.message)
+            : NoContent();
+    }
+}

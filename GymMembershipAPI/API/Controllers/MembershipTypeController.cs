@@ -21,7 +21,7 @@ public class MembershipTypeController(IMembershipTypeService service) : Controll
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetMembershipTypes()
+    public async Task<IActionResult> GetAll()
     {
         var result = await _service.GetAllAsync();
         if (result.IsFailure) return Conflict(result.Error.message);
@@ -29,7 +29,7 @@ public class MembershipTypeController(IMembershipTypeService service) : Controll
         return Ok(dto);
     }
 
-    [HttpGet("{publicId}")]
+    [HttpGet("{publicId:guid}")]
     public IActionResult GetMembershipTypesForPublicId([FromRoute] Guid publicId)
     {
         var result = _service.GetByPublicIdAsync(publicId).Result;
@@ -45,13 +45,13 @@ public class MembershipTypeController(IMembershipTypeService service) : Controll
         var result = await _service.CreateAsync(newTypeRequestDto);
         if (result.IsFailure) return Conflict(result.Error.message);
         var response = MembershipTypeMapper.ToResponseDto(result.Value);
-        return CreatedAtAction(nameof(GetMembershipTypesForPublicId), 
+        return CreatedAtAction(nameof(CreateMembershipType), 
             new { publicId = result.Value.PublicId },
             response);
     }
 
     // PATCH
-    [HttpPut("{publicId}")]
+    [HttpPut("{publicId:guid}")]
     public async Task<IActionResult> UpdateMembershipType([FromRoute] Guid publicId, [FromBody] MembershipTypeRequestDto updatedTypeDto)
     {
         var result = await _service.UpdateAsync(publicId, updatedTypeDto);
@@ -64,12 +64,10 @@ public class MembershipTypeController(IMembershipTypeService service) : Controll
     }
     
     //DELETE
-    [HttpDelete("{publicId}")]
-    public async Task<IActionResult> DeleteMembershipType([FromRoute] string publicId)
+    [HttpDelete("{publicId:guid}")]
+    public async Task<IActionResult> DeleteMembershipType([FromRoute] Guid publicId)
     {
-        if (string.IsNullOrEmpty(publicId)) return BadRequest(Error.NullPublicId);
-        if (!Guid.TryParse(publicId, out var publicIdGuid)) return BadRequest(Error.InvalidGuid);
-        var result = await _service.DeleteAsync(publicIdGuid);
+        var result = await _service.DeleteAsync(publicId);
         if (result.IsFailure) return Conflict(result.Error);
         return NoContent();
     }
