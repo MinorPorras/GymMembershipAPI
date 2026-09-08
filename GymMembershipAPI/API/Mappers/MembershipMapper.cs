@@ -5,7 +5,7 @@ namespace GymMembershipAPI.API.Mappers;
 
 public class MembershipMapper
 {
-    public static Membership ToEntity(MembershipRequestDto dto)
+    public static Membership ToEntity()
     {
         return new Membership()
         {
