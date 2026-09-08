@@ -9,16 +9,16 @@ namespace GymMembershipAPI.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class MemberController(MemberService service) : Controller
+public class MemberController: ControllerBase
 {
-    private MemberService _service = service;
+    private readonly MemberService _service;
 
-    // GET
-    public IActionResult Index()
+    public MemberController(MemberService service)
     {
-        return View();
+        _service = service;
     }
 
+    // GET
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
@@ -39,19 +39,20 @@ public class MemberController(MemberService service) : Controller
 
     //POST
     [HttpPost]
-    public async Task<IActionResult> CreateAsync([FromBody] MemberRequestDto dto)
+    public async Task<IActionResult> CreateAsync([FromBody] MemberCreateDto dto)
     {
         var result = await _service.CreateAsync(dto);
-        if (result.IsFailure) return BadRequest(result.Error.message);
+        if (result.IsFailure) 
+            return BadRequest(result.Error.message);
         var response = MemberMapper.ToResponseDto(result.Value);
-        return CreatedAtAction(nameof(CreateAsync),
+        return CreatedAtAction(nameof(GetByPublicId),
             response.PublicId,
             response);
     }
 
     // PUT
     [HttpPut("{publicId}")]
-    public async Task<IActionResult> UpdateAsync([FromRoute] Guid publicId, [FromBody] MemberRequestDto dto)
+    public async Task<IActionResult> UpdateAsync([FromRoute] Guid publicId, [FromBody] MemberUpdateDto dto)
     {
         var result = await _service.UpdateAsync(publicId, dto);
         if (result.IsFailure)

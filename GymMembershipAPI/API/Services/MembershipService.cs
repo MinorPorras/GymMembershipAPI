@@ -8,10 +8,16 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GymMembershipAPI.API.Services;
 
-public class MembershipService(GymDbContext context, ILogger<MembershipService> logger) : IMembershipService
+public class MembershipService : IMembershipService
 {
-    private readonly GymDbContext _context = context;
-    private readonly ILogger<MembershipService> _logger = logger;
+    private readonly GymDbContext _context;
+    private readonly ILogger<MembershipService> _logger;
+
+    public MembershipService(ILogger<MembershipService> logger, GymDbContext context)
+    {
+        _logger = logger;
+        _context = context;
+    }
 
     public async Task<Result<Membership>> GetByPublicIdAsync(Guid publicId)
     {
@@ -29,10 +35,8 @@ public class MembershipService(GymDbContext context, ILogger<MembershipService> 
         var existingMember =
             await _context.Members.FirstOrDefaultAsync(e => e.PublicId == memberPublicId);
         if (existingMember == null) return Result<List<Membership>>.Failure(MembershipErrors.MemberNotFound);
-
         var list = await _context.Memberships.Where(e => e.IsActive && e.MemberId == existingMember.Id)
             .ToListAsync();
-
         return Result<List<Membership>>.Success(list);
     }
 
@@ -41,10 +45,8 @@ public class MembershipService(GymDbContext context, ILogger<MembershipService> 
         var existingMember =
             await _context.Members.FirstOrDefaultAsync(e => e.PublicId == memberPublicId);
         if (existingMember == null) return Result<List<Membership>>.Failure(MembershipErrors.MemberNotFound);
-
         var list = await _context.Memberships.Where(m => m.MemberId == existingMember.Id)
             .OrderByDescending(m => m.StartDate).ToListAsync();
-
         return Result<List<Membership>>.Success(list);
     }
 
@@ -58,7 +60,7 @@ public class MembershipService(GymDbContext context, ILogger<MembershipService> 
             await _context.MembershipTypes.FirstOrDefaultAsync(e => e.PublicId == dto.MembershipTypePublicId);
         if (existingMembershipType == null) return Result<Membership>.Failure(MembershipErrors.MembershipTypeNotFound);
 
-        var entity = MembershipMapper.ToEntity(dto);
+        var entity = MembershipMapper.ToEntity();
         entity.MemberId = existingMember.Id;
         entity.MembershipTypeId = existingMembershipType.Id;
         entity.StartDate = DateTime.UtcNow;

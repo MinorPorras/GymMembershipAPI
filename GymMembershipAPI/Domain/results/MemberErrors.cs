@@ -26,4 +26,9 @@ public class MemberErrors
         "MemberErrors.EmptyOrNullEmail",
         "The email must not be empty."
     );
+    
+    public static readonly Error MembershipTypeNotFound = new(
+        "MemberErrors.MembershipTypeNotFound",
+        "The specified membership type does not exists."
+    );
 }

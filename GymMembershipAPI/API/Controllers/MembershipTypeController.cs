@@ -10,15 +10,15 @@ namespace GymMembershipAPI.API.Controllers;
 
 [ApiController]
 [Route("api/membershiptypes")]
-public class MembershipTypeController(IMembershipTypeService service) : Controller
+public class MembershipTypeController: ControllerBase
 {
-    private readonly IMembershipTypeService _service = service;
+    private readonly IMembershipTypeService _service;
 
-    // GET
-    public IActionResult Index()
+    public MembershipTypeController(IMembershipTypeService service)
     {
-        return View();
+        _service = service;
     }
+    // GET
 
     [HttpGet]
     public async Task<IActionResult> GetAll()

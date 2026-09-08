@@ -5,13 +5,13 @@ namespace GymMembershipAPI.API.Mappers;
 
 public class MemberMapper
 {
-    public static Member ToEntity(MemberRequestDto requestDto)
+    public static Member ToEntity(MemberCreateDto createDto)
     {
         return new Member
         {
-            Name = requestDto.Name,
-            Email = requestDto.Email,
-            Phone = requestDto.Phone,
+            Name = createDto.Name,
+            Email = createDto.Email,
+            Phone = createDto.Phone,
         };
     }
 

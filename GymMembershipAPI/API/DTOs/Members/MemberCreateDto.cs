@@ -1,7 +1,8 @@
 ﻿namespace GymMembershipAPI.API.DTOs.Members;
 
-public record MemberRequestDto(
+public record MemberCreateDto(
     string Name,
     string Email,
-    string Phone
+    string Phone,
+    Guid MembershipTypeId
 );

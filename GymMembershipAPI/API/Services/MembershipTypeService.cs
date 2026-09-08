@@ -11,10 +11,17 @@ using static System.String;
 
 namespace GymMembershipAPI.API.Services;
 
-public class MembershipTypeService(GymDbContext context) : IMembershipTypeService
+public class MembershipTypeService : IMembershipTypeService
 {
     // Context
-    private readonly GymDbContext _context = context;
+    private readonly GymDbContext _context;
+    private readonly ILogger<MembershipTypeService> _logger;
+
+    public MembershipTypeService(GymDbContext context, ILogger<MembershipTypeService> logger)
+    {
+        _context = context;
+        _logger = logger;
+    }
 
     // Validation
     private static Result IsValidDto(MembershipTypeRequestDto requestDto)
@@ -30,11 +37,13 @@ public class MembershipTypeService(GymDbContext context) : IMembershipTypeServic
 
         return Result.Success();
     }
+
     private async Task<bool> ExistsAsync(Guid publicId)
         => await _context.MembershipTypes.AnyAsync(x => x.PublicId == publicId);
+
     private async Task<bool> ExistsByNameAsync(string name)
         => await _context.MembershipTypes.AnyAsync(x => x.Name == name);
-    
+
     // IMembershipType implementation
     public async Task<Result<MembershipType>> GetByPublicIdAsync(Guid publicId)
     {
@@ -55,8 +64,8 @@ public class MembershipTypeService(GymDbContext context) : IMembershipTypeServic
         var hasValidData = IsValidDto(requestDto);
         if (hasValidData.IsFailure)
             return Result<MembershipType>.Failure(hasValidData.Error);
-        
-        if (await ExistsByNameAsync(requestDto.Name)) 
+
+        if (await ExistsByNameAsync(requestDto.Name))
             return Result<MembershipType>.Failure(MembershipTypeErrors.AlreadyExists);
 
         var entity = MembershipTypeMapper.ToEntity(requestDto);
@@ -68,7 +77,9 @@ public class MembershipTypeService(GymDbContext context) : IMembershipTypeServic
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            _logger.LogError(e,
+                "Error creating membership type with Name {MembershipTypeName}",
+                requestDto.Name);
             return Result<MembershipType>.Failure(Error.Unknown(e.Message));
         }
     }
@@ -81,7 +92,7 @@ public class MembershipTypeService(GymDbContext context) : IMembershipTypeServic
 
         var existingType = await _context.MembershipTypes.FirstOrDefaultAsync(x => x.PublicId == publicId);
         if (existingType == null) return Result<MembershipType>.Failure(MembershipTypeErrors.NotFound);
-        
+
         try
         {
             existingType.Name = dto.Name;
@@ -93,7 +104,9 @@ public class MembershipTypeService(GymDbContext context) : IMembershipTypeServic
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            _logger.LogError(e,
+                "Error updating membership type {MembershipTypePublicId}",
+                publicId);
             return Result<MembershipType>.Failure(Error.Unknown(e.Message));
         }
     }
@@ -110,7 +123,9 @@ public class MembershipTypeService(GymDbContext context) : IMembershipTypeServic
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            _logger.LogError(e,
+                "Error deleting membership type {MembershipTypePublicId}",
+                publicId);
             return Result.Failure(Error.Unknown(e.Message));
         }
     }
