@@ -16,6 +16,7 @@ public class GymDbContext : DbContext
     public DbSet<MembershipType> MembershipTypes { get; set; }
     public DbSet<Booking> Bookings { get; set; }
     public DbSet<RegisterAccess> RegisterAccesses { get; set; }
+    public DbSet<Membership> Memberships { get; set; }
 
     // Configuraciones de relaciones y reglas con FLUENT API
     protected override void OnModelCreating(ModelBuilder modelBuilder)

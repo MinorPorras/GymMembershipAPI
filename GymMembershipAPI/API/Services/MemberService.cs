@@ -15,10 +15,12 @@ public class MemberService(GymDbContext context, IMembershipTypeService memberTy
     private readonly GymDbContext _context = context;
     private readonly IMembershipTypeService _memberTypeService = memberTypeService;
 
-    private static Result IsValid(MemberRequestDto dto)
+    private Result IsValidDto(MemberRequestDto dto)
     {
         if (IsNullOrWhiteSpace(dto.Name)) return Result.Failure(MemberErrors.EmptyOrNullName);
         if (IsNullOrWhiteSpace(dto.Email)) return Result.Failure(MemberErrors.EmptyOrNullEmail);
+        var exists = _context.Members.Any(x => x.Email == dto.Email);
+        if  (exists) return Result.Failure(MemberErrors.EmailAlreadyExists);
         var attribute = new EmailAddressAttribute();
         return attribute.IsValid(dto.Email)
             ? Result.Success()
@@ -56,9 +58,10 @@ public class MemberService(GymDbContext context, IMembershipTypeService memberTy
         }
     }
 
+    //TODO: Add creation of first membership
     public async Task<Result<Member>> CreateAsync(MemberRequestDto dto)
     {
-        var isValid = IsValid(dto);
+        var isValid = IsValidDto(dto);
         if (isValid.IsFailure) return Result<Member>.Failure(isValid.Error);
 
         var entity = new Member
@@ -82,7 +85,7 @@ public class MemberService(GymDbContext context, IMembershipTypeService memberTy
 
     public async Task<Result<Member>> UpdateAsync(Guid publicId, MemberRequestDto dto)
     {
-        var isValid = IsValid(dto);
+        var isValid = IsValidDto(dto);
         if (isValid.IsFailure) return Result<Member>.Failure(isValid.Error);
         var entity = await _context.Members.FirstOrDefaultAsync(x => x.PublicId == publicId);
         if (entity == null) return Result<Member>.Failure(MemberErrors.NotFound);

@@ -162,7 +162,7 @@ namespace GymMembershipAPI.Migrations
                     b.HasIndex("PublicId")
                         .IsUnique();
 
-                    b.ToTable("Membership");
+                    b.ToTable("Memberships");
                 });
 
             modelBuilder.Entity("GymMembershipAPI.Domain.Entities.MembershipType", b =>

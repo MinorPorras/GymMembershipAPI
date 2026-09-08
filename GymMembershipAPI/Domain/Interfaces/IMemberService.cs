@@ -8,4 +8,7 @@ public interface IMemberService : IServiceBase<Member>
 {
     public Task<Result<Member>> CreateAsync(MemberRequestDto requestDto);
     public Task<Result<Member>> UpdateAsync(Guid publicId, MemberRequestDto dto);
+    public Task<Result> DeleteAsync(Guid publicId);
+    public Task<Result<List<Member>>> GetAllAsync();
+
 }

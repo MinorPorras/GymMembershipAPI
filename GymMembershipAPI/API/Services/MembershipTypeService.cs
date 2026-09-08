@@ -17,7 +17,7 @@ public class MembershipTypeService(GymDbContext context) : IMembershipTypeServic
     private readonly GymDbContext _context = context;
 
     // Validation
-    private static Result ValidateDto(MembershipTypeRequestDto requestDto)
+    private static Result IsValidDto(MembershipTypeRequestDto requestDto)
     {
         if (IsNullOrWhiteSpace(requestDto.Name))
             return Result.Failure(MembershipTypeErrors.InvalidName);
@@ -52,7 +52,7 @@ public class MembershipTypeService(GymDbContext context) : IMembershipTypeServic
 
     public async Task<Result<MembershipType>> CreateAsync(MembershipTypeRequestDto requestDto)
     {
-        var hasValidData = ValidateDto(requestDto);
+        var hasValidData = IsValidDto(requestDto);
         if (hasValidData.IsFailure)
             return Result<MembershipType>.Failure(hasValidData.Error);
         
@@ -75,7 +75,7 @@ public class MembershipTypeService(GymDbContext context) : IMembershipTypeServic
 
     public async Task<Result<MembershipType>> UpdateAsync(Guid publicId, MembershipTypeRequestDto dto)
     {
-        var hasValidData = ValidateDto(dto);
+        var hasValidData = IsValidDto(dto);
         if (hasValidData.IsFailure)
             return Result<MembershipType>.Failure(hasValidData.Error);
 

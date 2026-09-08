@@ -9,4 +9,8 @@ public interface IMembershipTypeService: IServiceBase<MembershipType>
 {
     public Task<Result<MembershipType>> CreateAsync(MembershipTypeRequestDto requestDto);
     public Task<Result<MembershipType>> UpdateAsync(Guid publicId, MembershipTypeRequestDto dto);
+    public Task<Result> DeleteAsync(Guid publicId);
+    public Task<Result<List<MembershipType>>> GetAllAsync();
+
+
 }
