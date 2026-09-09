@@ -23,7 +23,7 @@ public class MembershipController : ControllerBase
     {
         var result = await _service.GetByPublicIdAsync(publicId);
         if (result.IsFailure)
-            return NotFound(result.Error.message);
+            return NotFound(result.Error.Message);
         var response = MembershipMapper.ToResponseDto(result.Value);
         return Ok(response);
     }
@@ -33,7 +33,7 @@ public class MembershipController : ControllerBase
     {
         var result = await _service.GetActiveByMemberAsync(memberPubliId);
         if (result.IsFailure)
-            return NotFound(result.Error.message);
+            return NotFound(result.Error.Message);
         var response = MembershipMapper.ToResponseDtos(result.Value);
         return Ok(response);
     }
@@ -43,7 +43,7 @@ public class MembershipController : ControllerBase
     {
         var result = await _service.GetHistoryByMemberAsync(memberPubliId);
         if (result.IsFailure)
-            return NotFound(result.Error.message);
+            return NotFound(result.Error.Message);
         var response = MembershipMapper.ToResponseDtos(result.Value);
         return Ok(response);
     }
@@ -53,7 +53,7 @@ public class MembershipController : ControllerBase
     public async Task<IActionResult> Create([FromBody] MembershipRequestDto dto)
     {
         var result = await _service.CreateAsync(dto);
-        if (result.IsFailure) return BadRequest(result.Error.message);
+        if (result.IsFailure) return BadRequest(result.Error.Message);
         var response = MembershipMapper.ToResponseDto(result.Value);
         return CreatedAtAction(
             nameof(GetByPublicId), 
@@ -67,7 +67,7 @@ public class MembershipController : ControllerBase
     public async Task<IActionResult> Cancel([FromRoute] Guid membershipPublicId)
     {
         var result = await _service.CancelAsync(membershipPublicId);
-        if (result.IsFailure) return NotFound(result.Error.message);
+        if (result.IsFailure) return NotFound(result.Error.Message);
         return NoContent();
     }    
 }

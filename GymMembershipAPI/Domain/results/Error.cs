@@ -1,6 +1,6 @@
 ﻿namespace GymMembershipAPI.Domain.results;
 
-public record Error(string code, string message)
+public record Error(string Code, string Message)
 {
     public static readonly Error None = new(string.Empty, string.Empty);
     public static Error Unknown (string message) => new("General.Unknown", message);

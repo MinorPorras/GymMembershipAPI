@@ -17,9 +17,14 @@ public class GroupClassErrors
         "The Instructor's name must not be null or empty."
     );
 
-    public static readonly Error NameAlredyExists = new(
+    public static readonly Error NameAlreadyExists = new(
         "GroupClassErrors.NameAlredyExists",
         "The class name already exists."
+    );
+    
+    public static readonly Error InvalidDate = new(
+        "GroupClassErrors.InvalidDate",
+        "The selected date must be today or in the future."
     );
 
     public static readonly Error DateAlredyInUse = new(

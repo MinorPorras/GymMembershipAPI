@@ -6,10 +6,9 @@ namespace GymMembershipAPI.Domain.Interfaces;
 
 public interface IGroupClassService : IServiceBase<GroupClass>
 {
-    public Task<Result<GroupClass>> GetByIdAsync(Guid publicId);
     public Task<Result<List<GroupClass>>> GetAllAsync();
     public Task<Result<List<GroupClass>>> GetByDateAsync(DateTime date);
     public Task<Result<GroupClass>> CreateAsync(GroupClassRequestDto dto);
-    public Task<Result<GroupClass>> DeleteAsync(Guid publicId);
+    public Task<Result> DeleteAsync(Guid publicId);
     public Task<Result<GroupClass>> UpdateAsync(Guid publicId, GroupClassRequestDto dto);
 }
