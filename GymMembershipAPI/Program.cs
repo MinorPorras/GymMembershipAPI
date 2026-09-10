@@ -17,6 +17,7 @@ builder.Services.AddScoped<IMembershipTypeService, MembershipTypeService>();
 builder.Services.AddScoped<IMemberService, MemberService>();
 builder.Services.AddScoped<IMembershipService, MembershipService>();
 builder.Services.AddScoped<IGroupClassService, GroupClassService>();
+builder.Services.AddScoped<IRegisterAccessService, RegisterAccessService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApi();
