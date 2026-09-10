@@ -2,6 +2,5 @@
 
 public record BookingRequestDto(
     Guid MemberPublicId,
-    Guid GroupClassPublicId,
-    DateTime BookingDate
+    Guid GroupClassPublicId
 );

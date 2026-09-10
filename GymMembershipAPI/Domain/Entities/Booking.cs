@@ -10,10 +10,11 @@ public class Booking
     public int GroupClassId { get; set; }
     public GroupClass GroupClass { get; set; } = null;
 
-    public DateTime BookingDate { get; set; }
+    public DateTime CreatedAt { get; set; }
 
     // Confirmada, Cancelada, Asistio
     public string State { get; set; } = "Confirmada";
     
-    //TODO: Add Concurrency Token
+    // Concurrency Token with xmin in POSTGREsql
+    public uint Version { get; set; }
 }

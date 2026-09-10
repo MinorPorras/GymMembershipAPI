@@ -7,7 +7,7 @@ public class BookingMapper
 {
     public static Booking ToEntity(BookingRequestDto dto) => new Booking()
     {
-        BookingDate = dto.BookingDate,
+        CreatedAt = DateTime.UtcNow,
         State = "Confirmada"
     };
 
@@ -15,9 +15,10 @@ public class BookingMapper
         PublicId: entity.PublicId,
         MemberPublicId: entity.Member.PublicId,
         GroupClassPublicId: entity.GroupClass.PublicId,
-        BookingDate: entity.BookingDate,
+        ClassDate: entity.GroupClass.DateHour,
+        BookingDate: entity.CreatedAt,
         State: entity.State
     );
 
-    public static IEnumerable<BookingResponseDto> ToDto(IEnumerable<Booking> entities) => entities.Select(ToDto);
+    public static IEnumerable<BookingResponseDto> ToDtos(IEnumerable<Booking> entities) => entities.Select(ToDto);
 }

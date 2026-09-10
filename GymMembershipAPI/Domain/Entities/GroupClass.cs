@@ -10,4 +10,9 @@ public class GroupClass
     public int MaxMembers { get; set; }
 
     public ICollection<Booking> Bookings { get; set; }
+    
+    // Concurrency Token with xmin in POSTGREsql
+    public uint Version { get; set; }
+    
+    public DateTime LastBookingAt { get; set; } 
 }

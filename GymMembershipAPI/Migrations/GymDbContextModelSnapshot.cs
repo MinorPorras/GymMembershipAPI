@@ -30,7 +30,7 @@ namespace GymMembershipAPI.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime>("BookingDate")
+                    b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("GroupClassId")
@@ -45,6 +45,9 @@ namespace GymMembershipAPI.Migrations
                     b.Property<string>("State")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<long>("Version")
+                        .HasColumnType("bigint");
 
                     b.HasKey("Id");
 
@@ -74,6 +77,9 @@ namespace GymMembershipAPI.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<DateTime>("LastBookingAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<int>("MaxMembers")
                         .HasColumnType("integer");
 
@@ -84,7 +90,16 @@ namespace GymMembershipAPI.Migrations
                     b.Property<Guid>("PublicId")
                         .HasColumnType("uuid");
 
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("PublicId")
+                        .IsUnique();
 
                     b.ToTable("GroupClasses");
                 });

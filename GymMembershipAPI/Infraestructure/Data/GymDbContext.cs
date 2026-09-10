@@ -44,12 +44,12 @@ public class GymDbContext : DbContext
         modelBuilder.Entity<Membership>(entity =>
         {
             entity.HasIndex(e => e.PublicId).IsUnique();
-            
+
             entity.HasOne(e => e.Member)
                 .WithMany(e => e.Memberships)
                 .HasForeignKey(e => e.MemberId)
                 .OnDelete(DeleteBehavior.Cascade);
-            
+
             entity.HasOne(e => e.MembershipType)
                 .WithMany()
                 .HasForeignKey(e => e.MembershipTypeId)
@@ -68,6 +68,16 @@ public class GymDbContext : DbContext
             entity.HasOne(e => e.GroupClass)
                 .WithMany(e => e.Bookings)
                 .HasForeignKey(e => e.GroupClassId);
+        });
+
+        modelBuilder.Entity<GroupClass>(entity =>
+        {
+            entity.HasIndex(e => e.PublicId).IsUnique();
+            entity.Property(e => e.Version)
+                .IsRowVersion()
+                .HasColumnName("xmin")
+                .HasColumnType("xid")
+                .ValueGeneratedOnAddOrUpdate();
         });
     }
 }
