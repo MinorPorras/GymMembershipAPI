@@ -90,6 +90,9 @@ public class MembershipTypeService : IMembershipTypeService
         if (hasValidData.IsFailure)
             return Result<MembershipType>.Failure(hasValidData.Error);
 
+        var nameAlreadyExists = await _context.MembershipTypes.AnyAsync(x => x.Name == dto.Name &&  x.PublicId != publicId);
+        if (nameAlreadyExists) return Result<MembershipType>.Failure(MembershipTypeErrors.AlreadyExists);
+        
         var existingType = await _context.MembershipTypes.FirstOrDefaultAsync(x => x.PublicId == publicId);
         if (existingType == null) return Result<MembershipType>.Failure(MembershipTypeErrors.NotFound);
 
