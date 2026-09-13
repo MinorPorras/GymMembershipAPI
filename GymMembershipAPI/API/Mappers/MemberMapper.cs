@@ -7,12 +7,7 @@ public class MemberMapper
 {
     public static Member ToEntity(MemberCreateDto createDto)
     {
-        return new Member
-        {
-            Name = createDto.Name,
-            Email = createDto.Email,
-            Phone = createDto.Phone,
-        };
+        return new Member(name: createDto.Name, email: createDto.Email, phone: createDto.Phone);
     }
 
     public static MemberResponseDto ToResponseDto(Member entity)

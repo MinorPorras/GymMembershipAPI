@@ -8,12 +8,8 @@ public class MembershipTypeMapper
 {
     public static MembershipType ToEntity(MembershipTypeRequestDto requestDto)
     {
-        return new MembershipType
-        {
-            Name = requestDto.Name,
-            Price = requestDto.Price,
-            DurationMonths = requestDto.DurationMonths
-        };
+        return new MembershipType(name: requestDto.Name, price: requestDto.Price,
+            durationMonths: requestDto.DurationMonths);
     }
 
     public static MembershipTypeResponseDto ToResponseDto(MembershipType entity)

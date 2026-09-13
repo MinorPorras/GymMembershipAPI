@@ -19,7 +19,8 @@ public class MemberService : IMemberService
     private readonly ILogger<MemberService> _logger;
     private readonly IMembershipService _membershipService;
 
-    public MemberService(GymDbContext context, IMembershipTypeService memberTypeService, ILogger<MemberService> logger, IMembershipService membershipService)
+    public MemberService(GymDbContext context, IMembershipTypeService memberTypeService, ILogger<MemberService> logger,
+        IMembershipService membershipService)
     {
         _context = context;
         _memberTypeService = memberTypeService;
@@ -27,24 +28,28 @@ public class MemberService : IMemberService
         _membershipService = membershipService;
     }
 
-    private Result IsValidDto(MemberCreateDto dto)
+    private async Task<Result> IsValidUpdateDtoAsync(Guid publicId, MemberUpdateDto dto)
     {
         if (IsNullOrWhiteSpace(dto.Name)) return Result.Failure(MemberErrors.EmptyOrNullName);
         if (IsNullOrWhiteSpace(dto.Email)) return Result.Failure(MemberErrors.EmptyOrNullEmail);
-        var exists = _context.Members.Any(x => x.Email == dto.Email);
+
+        var exists = await _context.Members.AnyAsync(x => x.Email == dto.Email && x.PublicId != publicId);
         if (exists) return Result.Failure(MemberErrors.EmailAlreadyExists);
+
         var attribute = new EmailAddressAttribute();
         return attribute.IsValid(dto.Email)
             ? Result.Success()
             : Result.Failure(MemberErrors.InvalidEmailFormat);
     }
 
-    private Result IsValidDto(MemberUpdateDto dto)
+    private async Task<Result> IsValidCreateDtoAsync(MemberCreateDto dto)
     {
         if (IsNullOrWhiteSpace(dto.Name)) return Result.Failure(MemberErrors.EmptyOrNullName);
         if (IsNullOrWhiteSpace(dto.Email)) return Result.Failure(MemberErrors.EmptyOrNullEmail);
-        var exists = _context.Members.Any(x => x.Email == dto.Email);
+
+        var exists = await _context.Members.AnyAsync(x => x.Email == dto.Email);
         if (exists) return Result.Failure(MemberErrors.EmailAlreadyExists);
+
         var attribute = new EmailAddressAttribute();
         return attribute.IsValid(dto.Email)
             ? Result.Success()
@@ -84,15 +89,15 @@ public class MemberService : IMemberService
 
     public async Task<Result<Member>> CreateAsync(MemberCreateDto dto)
     {
-        var isValid = IsValidDto(dto);
+        var isValid = await IsValidCreateDtoAsync(dto);
         if (isValid.IsFailure) return Result<Member>.Failure(isValid.Error);
         var membershipType = await _context.MembershipTypes
-            .FirstOrDefaultAsync(t => t.PublicId == dto.MembershipTypeId);
-        if (membershipType == null) 
+            .FirstOrDefaultAsync(t => t.PublicId == dto.MembershipTypePublicId);
+        if (membershipType == null)
             return Result<Member>.Failure(MembershipTypeErrors.NotFound);
 
         var entity = MemberMapper.ToEntity(dto);
-        
+
         var initialMembership = new Membership
         {
             MembershipTypeId = membershipType.Id,
@@ -117,10 +122,12 @@ public class MemberService : IMemberService
 
     public async Task<Result<Member>> UpdateAsync(Guid publicId, MemberUpdateDto dto)
     {
-        var isValid = IsValidDto(dto);
+        var isValid = await IsValidUpdateDtoAsync(publicId, dto);
         if (isValid.IsFailure) return Result<Member>.Failure(isValid.Error);
+
         var entity = await _context.Members.FirstOrDefaultAsync(x => x.PublicId == publicId);
         if (entity == null) return Result<Member>.Failure(MemberErrors.NotFound);
+
         try
         {
             entity.Name = dto.Name;

@@ -32,8 +32,7 @@ public class RegisterAccessService : IRegisterAccessService
         if (dto.AccessDate.Date < DateTime.UtcNow.Date)
             return Result<RegisterAccess>.Failure(RegisterAccessErrors.InvalidDate);
 
-        var member = await _context.Members.FirstOrDefaultAsync(r => r.PublicId == dto.MemberPublciId);
-
+        var member = await _context.Members.FirstOrDefaultAsync(r => r.PublicId == dto.MemberPublicId);
         if (member == null) return Result<RegisterAccess>.Failure(RegisterAccessErrors.NotFound);
 
         var hasMembership = await _context.Memberships
@@ -53,8 +52,7 @@ public class RegisterAccessService : IRegisterAccessService
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "An error occurred during register access for member {MemberPublicId}",
-                dto.MemberPublciId);
+            _logger.LogError(e, "UnexpectedError registering new access");
             return Result<RegisterAccess>.Failure(Error.Unknown(e.Message));
         }
     }

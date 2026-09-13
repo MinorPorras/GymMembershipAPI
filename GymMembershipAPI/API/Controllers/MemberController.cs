@@ -2,6 +2,7 @@
 using GymMembershipAPI.API.Mappers;
 using GymMembershipAPI.API.Services;
 using GymMembershipAPI.Domain.Entities;
+using GymMembershipAPI.Domain.Interfaces;
 using GymMembershipAPI.Domain.results;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,11 +10,11 @@ namespace GymMembershipAPI.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class MemberController: ControllerBase
+public class MemberController : ControllerBase
 {
-    private readonly MemberService _service;
+    private readonly IMemberService _service;
 
-    public MemberController(MemberService service)
+    public MemberController(IMemberService service)
     {
         _service = service;
     }
@@ -42,7 +43,7 @@ public class MemberController: ControllerBase
     public async Task<IActionResult> CreateAsync([FromBody] MemberCreateDto dto)
     {
         var result = await _service.CreateAsync(dto);
-        if (result.IsFailure) 
+        if (result.IsFailure)
             return BadRequest(result.Error.Message);
         var response = MemberMapper.ToResponseDto(result.Value);
         return CreatedAtAction(nameof(GetByPublicId),

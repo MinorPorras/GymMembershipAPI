@@ -2,6 +2,13 @@
 
 public class Member
 {
+    public Member(string name, string email, string phone)
+    {
+        Name = name;
+        Email = email;
+        Phone = phone;
+    }
+
     public int Id { get; set; }
     public Guid PublicId { get; set; } = Guid.NewGuid();
     public string Name { get; set; }

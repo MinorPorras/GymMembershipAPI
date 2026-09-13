@@ -4,5 +4,5 @@ public record MemberCreateDto(
     string Name,
     string Email,
     string Phone,
-    Guid MembershipTypeId
+    Guid MembershipTypePublicId
 );

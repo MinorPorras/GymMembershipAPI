@@ -1,0 +1,44 @@
+﻿@baseUrl = http://localhost:5218
+@contentType = application/json
+###
+GET {{baseUrl}}/api/membershiptypes
+
+### 
+# PASO 1: Crear un MembershipType 
+# 👉 Copia el "publicId" de la respuesta de esta petición para el Paso 2
+POST {{baseUrl}}/api/membershiptypes
+Content-Type: {{contentType}}
+
+{
+  "name": "Plan Mensual Gold",
+  "price": 29.99,
+  "durationMonths": 1
+}
+###
+GET {{baseUrl}}/api/member
+
+
+### 
+# PASO 2: Crear un Member 
+# 👉 IMPORTANTE: Reemplaza "PEGA_AQUI..." con el publicId del Paso 1
+# 👉 Copia el "publicId" de la respuesta de esta petición para el Paso 3
+POST {{baseUrl}}/api/member
+Content-Type: {{contentType}}
+
+{
+  "name": "Juan Pérez",
+  "email": "juan.perez@test.com",
+  "phone": "555-1234",
+  "membershipTypePublicId": "a23e6a52-ab2c-44f1-bd6d-f427eb3bc29c"
+}
+
+### 
+# PASO 3: Registrar Acceso
+# 👉 IMPORTANTE: Reemplaza "PEGA_AQUI..." con el publicId del Paso 2
+POST {{baseUrl}}/api/registeraccess
+Content-Type: {{contentType}}
+
+{
+  "memberPublicId": "8fad776a-ec62-4689-81d7-c6515eeeb752",
+  "accessDate": "2026-09-14T10:00:00Z"
+}
