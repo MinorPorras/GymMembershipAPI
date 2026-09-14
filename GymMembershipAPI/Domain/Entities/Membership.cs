@@ -3,10 +3,10 @@
 public class Membership
 {
     public Membership(){}
-    public Membership(int memberId, int MembershipTypeId, DateTime startDate, DateTime endDate, bool isActive)
+    public Membership(int memberId, int membershipTypeId, DateTime startDate, DateTime endDate, bool isActive)
     {
         MemberId = memberId;
-        this.MembershipTypeId = MembershipTypeId;
+        MembershipTypeId = membershipTypeId;
         StartDate = startDate;
         EndDate = endDate;
         IsActive = isActive;

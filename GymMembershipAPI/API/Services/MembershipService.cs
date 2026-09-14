@@ -30,7 +30,7 @@ public class MembershipService : IMembershipService
             : Result<Membership>.Success(entity);
     }
 
-    public async Task<Result<List<Membership>>> GetActiveByMemberAsync(Guid memberPublicId)
+    public async Task<Result<List<Membership>>> GetActiveByMemberPublicId(Guid memberPublicId)
     {
         var existingMember =
             await _context.Members.FirstOrDefaultAsync(e => e.PublicId == memberPublicId);
@@ -40,7 +40,7 @@ public class MembershipService : IMembershipService
         return Result<List<Membership>>.Success(list);
     }
 
-    public async Task<Result<List<Membership>>> GetHistoryByMemberAsync(Guid memberPublicId)
+    public async Task<Result<List<Membership>>> GetHistoryByMemberPublicIdAsync(Guid memberPublicId)
     {
         var existingMember =
             await _context.Members.FirstOrDefaultAsync(e => e.PublicId == memberPublicId);
@@ -89,7 +89,7 @@ public class MembershipService : IMembershipService
             return Result<Membership>.Failure(Error.Unknown(e.Message));
         }
     }
-    
+
     public async Task<Result> CancelAsync(Guid membershipPublicId)
     {
         var membership = await _context.Memberships.FirstOrDefaultAsync(e => e.PublicId == membershipPublicId);

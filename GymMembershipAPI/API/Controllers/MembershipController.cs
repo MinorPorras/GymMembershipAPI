@@ -31,7 +31,7 @@ public class MembershipController : ControllerBase
     [HttpGet("member/{memberPubliId:guid}/active")]
     public async Task<IActionResult> GetActiveByMember([FromRoute] Guid memberPubliId)
     {
-        var result = await _service.GetActiveByMemberAsync(memberPubliId);
+        var result = await _service.GetActiveByMemberPublicId(memberPubliId);
         if (result.IsFailure)
             return NotFound(result.Error.Message);
         var response = MembershipMapper.ToResponseDtos(result.Value);
@@ -41,7 +41,7 @@ public class MembershipController : ControllerBase
     [HttpGet("member/{memberPubliId:guid}/history")]
     public async Task<IActionResult> GetHistoryByMember([FromRoute] Guid memberPubliId)
     {
-        var result = await _service.GetHistoryByMemberAsync(memberPubliId);
+        var result = await _service.GetHistoryByMemberPublicIdAsync(memberPubliId);
         if (result.IsFailure)
             return NotFound(result.Error.Message);
         var response = MembershipMapper.ToResponseDtos(result.Value);
