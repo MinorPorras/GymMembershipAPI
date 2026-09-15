@@ -21,7 +21,7 @@ public class BookingController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
-        var result = await _bookingService.GetAllBookings();
+        var result = await _bookingService.GetAllAsync();
         if (result.IsFailure) return StatusCode(500, result.Error.Message);
         var response = BookingMapper.ToDtos(result.Value);
         return Ok(response);
@@ -39,7 +39,7 @@ public class BookingController : ControllerBase
     [HttpGet("member/{memberId:guid}")]
     public async Task<IActionResult> GetByMemberPublicId([FromRoute] Guid memberId)
     {
-        var result = await _bookingService.GetBookingByMemberPublicId(memberId);
+        var result = await _bookingService.GetByMemberPublicIdAsync(memberId);
         if (result.IsFailure) return NotFound(result.Error.Message);
         var response = BookingMapper.ToDtos(result.Value);
         return Ok(response);

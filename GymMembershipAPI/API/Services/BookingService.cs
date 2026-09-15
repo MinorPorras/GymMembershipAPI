@@ -31,7 +31,7 @@ public class BookingService : IBookingService
     }
 
 
-    public async Task<Result<List<Booking>>> GetAllBookings()
+    public async Task<Result<List<Booking>>> GetAllAsync()
     {
         var list = await _context.Bookings
             .Include(e => e.Member)
@@ -40,7 +40,7 @@ public class BookingService : IBookingService
         return Result<List<Booking>>.Success(list);
     }
 
-    public async Task<Result<List<Booking>>> GetBookingByMemberPublicId(Guid memberPublicId)
+    public async Task<Result<List<Booking>>> GetByMemberPublicIdAsync(Guid memberPublicId)
     {
         var list = await _context.Bookings
             .Include(e => e.Member)
