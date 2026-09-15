@@ -20,12 +20,12 @@ public class GroupClassService : IGroupClassService
         _context = context;
     }
 
-    private async Task<Result> IsValidDto(GroupClassRequestDto dto, Guid? excludePubliId = null)  
+    private async Task<Result> IsValidDto(GroupClassRequestDto dto, Guid? excludePubliId = null)
     {
         if (IsNullOrWhiteSpace(dto.Name)) return Result.Failure(GroupClassErrors.EmptyOrNullName);
 
         var nameAlredyExists = await _context.GroupClasses
-                .AnyAsync(c => c.Name == dto.Name && c.PublicId != excludePubliId);
+            .AnyAsync(c => c.Name == dto.Name && c.PublicId != excludePubliId);
         if (nameAlredyExists)
             return Result.Failure(GroupClassErrors.NameAlreadyExists);
 
@@ -56,7 +56,7 @@ public class GroupClassService : IGroupClassService
 
     public async Task<Result<List<GroupClass>>> GetByDateAsync(DateTime date)
     {
-        var list = await _context.GroupClasses.Where(c => c.DateHour.Date == date).ToListAsync();
+        var list = await _context.GroupClasses.Where(c => c.DateHour.Date == date.Date).ToListAsync();
         return Result<List<GroupClass>>.Success(list);
     }
 
