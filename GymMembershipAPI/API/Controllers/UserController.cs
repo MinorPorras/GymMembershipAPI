@@ -7,6 +7,7 @@ namespace GymMembershipAPI.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class UserController : ControllerBase
 {
     private readonly IUserService _userService;
@@ -17,7 +18,6 @@ public class UserController : ControllerBase
     }
 
     [HttpGet("{userPublicId:guid}")]
-    [Authorize]
     public async Task<IActionResult> GetyPublicIdAsync(Guid userPublicId)
     {
         var result = await _userService.GetByPublicIdAsync(userPublicId);
@@ -32,6 +32,7 @@ public class UserController : ControllerBase
     }
 
     [HttpPost]
+    [AllowAnonymous]
     public async Task<IActionResult> CreateAsync([FromBody] UserCreateRequestDto dto)
     {
         var result = await _userService.CreateAsync(dto);
@@ -42,12 +43,5 @@ public class UserController : ControllerBase
             email = result.Value.Email,
             role = result.Value.Role.ToString()
         });
-    }
-    
-    [HttpGet("test-auth")]
-    [Authorize]
-    public IActionResult TestAuth()
-    {
-        return Ok(new { mensaje = "¡Autenticación exitosa! El token funciona." });
     }
 }

@@ -5,12 +5,7 @@ namespace GymMembershipAPI.API.Mappers;
 
 public class BookingMapper
 {
-    public static Booking ToEntity(BookingRequestDto dto) => new Booking()
-    {
-
-    };
-
-    public static BookingResponseDto ToDto(Booking entity) => new(
+    public static BookingResponseDto ToResponseDto(Booking entity) => new(
         PublicId: entity.PublicId,
         MemberPublicId: entity.Member.PublicId,
         GroupClassPublicId: entity.GroupClass.PublicId,
@@ -19,5 +14,6 @@ public class BookingMapper
         State: entity.State
     );
 
-    public static IEnumerable<BookingResponseDto> ToDtos(IEnumerable<Booking> entities) => entities.Select(ToDto);
+    public static IEnumerable<BookingResponseDto> ToResponseDtos(IEnumerable<Booking> entities) =>
+        entities.Select(ToResponseDto);
 }

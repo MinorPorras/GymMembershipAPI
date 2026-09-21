@@ -4,12 +4,14 @@ using GymMembershipAPI.API.Services;
 using GymMembershipAPI.Domain.Entities;
 using GymMembershipAPI.Domain.Interfaces;
 using GymMembershipAPI.Domain.Results;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GymMembershipAPI.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class MemberController : ControllerBase
 {
     private readonly IMemberService _service;
@@ -21,6 +23,7 @@ public class MemberController : ControllerBase
 
     // GET
     [HttpGet]
+    [Authorize(Roles = "Admin, Staff")]
     public async Task<IActionResult> GetAll()
     {
         var result = await _service.GetAllAsync();
@@ -40,6 +43,7 @@ public class MemberController : ControllerBase
 
     //POST
     [HttpPost]
+    [Authorize(Roles = "Admin, Staff")]
     public async Task<IActionResult> CreateAsync([FromBody] MemberCreateDto dto)
     {
         var result = await _service.CreateAsync(dto);
@@ -53,11 +57,12 @@ public class MemberController : ControllerBase
 
     // PUT
     [HttpPut("{publicId}")]
+    [Authorize(Roles = "Admin, Staff")]
     public async Task<IActionResult> UpdateAsync([FromRoute] Guid publicId, [FromBody] MemberUpdateDto dto)
     {
         var result = await _service.UpdateAsync(publicId, dto);
         if (result.IsFailure)
-            return result.Error.Code == "Member.NotFound"
+            return result.Error.Code == MemberErrors.NotFound.Code
                 ? NotFound(result.Error.Message)
                 : BadRequest(result.Error.Message);
 
@@ -67,6 +72,7 @@ public class MemberController : ControllerBase
 
     //DELETE
     [HttpDelete(("{publicId}"))]
+    [Authorize(Roles = "Admin, Staff")]
     public async Task<IActionResult> DeleteAsync([FromRoute] Guid publicId)
     {
         var result = await _service.DeleteAsync(publicId);

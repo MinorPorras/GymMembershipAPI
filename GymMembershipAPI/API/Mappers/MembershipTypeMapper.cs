@@ -22,7 +22,7 @@ public class MembershipTypeMapper
         );
     }
 
-    public static IEnumerable<MembershipTypeResponseDto> ToResponseDto(IEnumerable<MembershipType> entities)
+    public static IEnumerable<MembershipTypeResponseDto> ToResponseDtos(IEnumerable<MembershipType> entities)
     {
         return entities.Select(ToResponseDto);
     }

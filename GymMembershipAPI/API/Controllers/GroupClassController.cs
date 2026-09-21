@@ -2,12 +2,14 @@
 using GymMembershipAPI.API.Mappers;
 using GymMembershipAPI.Domain.Interfaces;
 using GymMembershipAPI.Domain.Results;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GymMembershipAPI.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class GroupClassController : ControllerBase
 {
     private readonly IGroupClassService _service;
@@ -19,6 +21,7 @@ public class GroupClassController : ControllerBase
 
     // GET
     [HttpGet]
+    [AllowAnonymous]
     public async Task<IActionResult> GetAll()
     {
         var result = await _service.GetAllAsync();
@@ -28,6 +31,7 @@ public class GroupClassController : ControllerBase
     }
 
     [HttpGet("{PublicId:guid}")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetByPublicId([FromRoute] Guid publicId)
     {
         var result = await _service.GetByPublicIdAsync(publicId);
@@ -37,6 +41,7 @@ public class GroupClassController : ControllerBase
     }
 
     [HttpGet("date/{date:datetime}")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetByDate([FromRoute] DateTime date)
     {
         var result = await _service.GetByDateAsync(date);
@@ -44,9 +49,10 @@ public class GroupClassController : ControllerBase
         var response = GroupClassMapper.ToDtos(result.Value);
         return Ok(response);
     }
-    
+
     //POST
     [HttpPost]
+    [Authorize(Roles = "Admin, Staff")]
     public async Task<IActionResult> Create([FromBody] GroupClassRequestDto dto)
     {
         var result = await _service.CreateAsync(dto);
@@ -55,12 +61,14 @@ public class GroupClassController : ControllerBase
             if (result.Error == GroupClassErrors.NameAlreadyExists) return Conflict(result.Error.Message);
             return BadRequest(result.Error.Message);
         }
+
         var response = GroupClassMapper.ToDto(result.Value);
         return CreatedAtAction(nameof(GetByPublicId), new { publicId = response.PublicId }, response);
     }
-    
+
     //PUT
     [HttpPut("{publicId:guid}")]
+    [Authorize(Roles = "Admin, Staff")]
     public async Task<IActionResult> Update([FromRoute] Guid publicId, [FromBody] GroupClassRequestDto dto)
     {
         var result = await _service.UpdateAsync(publicId, dto);
@@ -69,12 +77,14 @@ public class GroupClassController : ControllerBase
             if (result.Error == GroupClassErrors.NameAlreadyExists) return Conflict(result.Error.Message);
             return BadRequest(result.Error.Message);
         }
+
         var response = GroupClassMapper.ToDto(result.Value);
         return Ok(response);
     }
-    
+
     //DELETE
     [HttpDelete("{publicId:guid}")]
+    [Authorize(Roles = "Admin, Staff")]
     public async Task<IActionResult> Delete([FromRoute] Guid publicId)
     {
         var result = await _service.DeleteAsync(publicId);
