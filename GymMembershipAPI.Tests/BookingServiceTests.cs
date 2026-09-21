@@ -3,7 +3,7 @@ using GymMembershipAPI.API.DTOs.Booking;
 using GymMembershipAPI.API.Services;
 using GymMembershipAPI.Domain.Entities;
 using GymMembershipAPI.Domain.Interfaces;
-using GymMembershipAPI.Domain.results;
+using GymMembershipAPI.Domain.Results;
 using GymMembershipAPI.Infraestructure.Data;
 using GymMembershipAPI.Tests.Helpers;
 using Microsoft.EntityFrameworkCore;

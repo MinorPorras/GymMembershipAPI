@@ -1,4 +1,4 @@
-﻿using GymMembershipAPI.Domain.results;
+﻿using GymMembershipAPI.Domain.Results;
 
 namespace GymMembershipAPI.Domain.Interfaces;
 

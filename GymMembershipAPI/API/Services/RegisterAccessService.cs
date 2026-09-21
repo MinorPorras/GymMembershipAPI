@@ -1,8 +1,7 @@
 ﻿using GymMembershipAPI.API.DTOs.RegisterAccess;
-using GymMembershipAPI.API.Mappers;
 using GymMembershipAPI.Domain.Entities;
 using GymMembershipAPI.Domain.Interfaces;
-using GymMembershipAPI.Domain.results;
+using GymMembershipAPI.Domain.Results;
 using GymMembershipAPI.Infraestructure.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -29,9 +28,6 @@ public class RegisterAccessService : IRegisterAccessService
 
     public async Task<Result<RegisterAccess>> RegisterAsync(RegisterAccessRequestDto dto)
     {
-        if (dto.AccessDate.Date < DateTime.UtcNow.Date)
-            return Result<RegisterAccess>.Failure(RegisterAccessErrors.InvalidDate);
-
         var member = await _context.Members.FirstOrDefaultAsync(r => r.PublicId == dto.MemberPublicId);
         if (member == null) return Result<RegisterAccess>.Failure(RegisterAccessErrors.NotFound);
 
@@ -41,18 +37,18 @@ public class RegisterAccessService : IRegisterAccessService
         var entity = new RegisterAccess()
         {
             MemberId = member.Id,
-            AccessDate = dto.AccessDate,
+            AccessDate = DateTime.UtcNow,
             AllowAccess = hasMembership
         };
         try
         {
-            await _context.RegisterAccesses.AddAsync(entity);
+            _context.RegisterAccesses.Add(entity);
             await _context.SaveChangesAsync();
             return Result<RegisterAccess>.Success(entity);
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "UnexpectedError registering new access");
+            _logger.LogError(e, "Error registering access for member {MemberId}", member.Id);
             return Result<RegisterAccess>.Failure(Error.Unknown(e.Message));
         }
     }
@@ -68,9 +64,10 @@ public class RegisterAccessService : IRegisterAccessService
 
     public async Task<Result<List<RegisterAccess>>> GetByMemberPublicIdAsync(Guid memberPublicId)
     {
-        var member = await _context.Members.FirstOrDefaultAsync(m => m.PublicId == memberPublicId);
-        if (member == null) return Result<List<RegisterAccess>>.Failure(RegisterAccessErrors.NotFound);
-        var list = await _context.RegisterAccesses.Where(r => r.MemberId == member.Id).ToListAsync();
+        var list = await _context.RegisterAccesses
+            .Where(r => r.Member.PublicId == memberPublicId)
+            .ToListAsync();
+
         return Result<List<RegisterAccess>>.Success(list);
     }
 }

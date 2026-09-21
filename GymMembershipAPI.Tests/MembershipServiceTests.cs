@@ -2,7 +2,7 @@
 using GymMembershipAPI.API.DTOs.Membership;
 using GymMembershipAPI.API.Services;
 using GymMembershipAPI.Domain.Entities;
-using GymMembershipAPI.Domain.results;
+using GymMembershipAPI.Domain.Results;
 using GymMembershipAPI.Tests.Helpers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -108,7 +108,7 @@ public class MembershipServiceTests
     }
 
     [Fact]
-    public async Task GetActiveByMemberPublicIdAsync_InvalidMemberPublicId_ReturnFailure()
+    public async Task GetActiveByMemberPublicIdAsync_InvalidMemberPublicId_ReturnSuccessAndEmptyList()
     {
         await using var context = TestDbContextFactory.Create();
         var service = new MembershipService(_logger.Object, context);
@@ -118,9 +118,8 @@ public class MembershipServiceTests
         var result = await service.GetActiveByMemberPublicId(inexistentGuid);
 
         //Assert
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().NotBeNull();
-        result.Error.Code.Should().Be(MembershipErrors.MemberNotFound.Code);
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Count.Should().Be(0);
     }
 
     [Fact]
@@ -178,7 +177,7 @@ public class MembershipServiceTests
     }
 
     [Fact]
-    public async Task GetHistoryByMemberPublicIdAsync_InvalidMemberPublicId_ReturnFailure()
+    public async Task GetHistoryByMemberPublicIdAsync_InvalidMemberPublicId_ReturnSuccessAndEmptyList()
     {
         await using var context = TestDbContextFactory.Create();
         var service = new MembershipService(_logger.Object, context);
@@ -188,9 +187,8 @@ public class MembershipServiceTests
         var result = await service.GetHistoryByMemberPublicIdAsync(inexistentGuid);
 
         //Assert
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().NotBeNull();
-        result.Error.Code.Should().Be(MembershipErrors.MemberNotFound.Code);
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Count.Should().Be(0);
     }
 
     [Fact]

@@ -3,7 +3,7 @@ using GymMembershipAPI.API.DTOs;
 using GymMembershipAPI.API.DTOs.MembershipType;
 using GymMembershipAPI.API.Mappers;
 using GymMembershipAPI.Domain.Interfaces;
-using GymMembershipAPI.Domain.results;
+using GymMembershipAPI.Domain.Results;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GymMembershipAPI.API.Controllers;

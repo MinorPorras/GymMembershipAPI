@@ -3,7 +3,6 @@ using GymMembershipAPI.API.DTOs.Members;
 using GymMembershipAPI.API.Services;
 using GymMembershipAPI.Domain.Entities;
 using GymMembershipAPI.Domain.Interfaces;
-using GymMembershipAPI.Domain.results;
 using GymMembershipAPI.Domain.Results;
 using GymMembershipAPI.Tests.Helpers;
 using Microsoft.EntityFrameworkCore;
@@ -15,8 +14,6 @@ namespace GymMembershipAPI.Tests;
 public class MemberServiceTests
 {
     private readonly Mock<ILogger<MemberService>> _logger = new();
-    private readonly Mock<IMembershipTypeService> _membershipTypeService = new();
-    private readonly Mock<IMembershipService> _membershipService = new();
 
     #region GetMethodsTests
 
@@ -24,8 +21,8 @@ public class MemberServiceTests
     public async Task GetAllAsync_WithData_ReturnsSuccess()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new MemberService(context, _membershipTypeService.Object, _logger.Object,
-            _membershipService.Object);
+        var service = new MemberService(context, _logger.Object);
+
         var member = new Member("Test", "test@email.com", "1111-1111");
         context.Members.Add(member);
         await context.SaveChangesAsync();
@@ -47,8 +44,8 @@ public class MemberServiceTests
     public async Task GetAllAsync_WithEmptyData_ReturnsSuccessAndEmptyList()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new MemberService(context, _membershipTypeService.Object, _logger.Object,
-            _membershipService.Object);
+        var service = new MemberService(context, _logger.Object);
+
 
         //Act
         var result = await service.GetAllAsync();
@@ -63,8 +60,8 @@ public class MemberServiceTests
     public async Task GetByPublicIdAsync_WithValidData_ReturnsSuccess()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new MemberService(context, _membershipTypeService.Object, _logger.Object,
-            _membershipService.Object);
+        var service = new MemberService(context, _logger.Object);
+
         var member = new Member("Test", "test@email.com", "1111-1111");
         context.Members.Add(member);
         await context.SaveChangesAsync();
@@ -85,8 +82,8 @@ public class MemberServiceTests
     public async Task GetByPublicIdAsync_InvalidPublicId_ReturnsFailure()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new MemberService(context, _membershipTypeService.Object, _logger.Object,
-            _membershipService.Object);
+        var service = new MemberService(context, _logger.Object);
+
         var inexistentGuid = Guid.NewGuid();
 
         //Act
@@ -106,8 +103,7 @@ public class MemberServiceTests
     public async Task CreateAsync_WithValidDto_ReturnsSuccess()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new MemberService(context, _membershipTypeService.Object, _logger.Object,
-            _membershipService.Object);
+        var service = new MemberService(context, _logger.Object);
 
         var type = new MembershipType("Basic", 9.99m, 1);
         context.MembershipTypes.Add(type);
@@ -134,60 +130,12 @@ public class MemberServiceTests
             .BeCloseTo(DateTime.UtcNow.AddMonths(type.DurationMonths), new TimeSpan(0, 0, 0, 10));
     }
 
-    [Theory]
-    [InlineData("")]
-    [InlineData(" ")]
-    public async Task CreateAsync_NullOrEmptyName_ReturnsFailure(string name)
-    {
-        await using var context = TestDbContextFactory.Create();
-        var service = new MemberService(context, _membershipTypeService.Object, _logger.Object,
-            _membershipService.Object);
-
-        var type = new MembershipType("Basic", 9.99m, 1);
-        context.MembershipTypes.Add(type);
-        await context.SaveChangesAsync();
-
-        var dto = new MemberCreateDto(name, "testEmail@gmail.com", "testPhone", type.PublicId);
-
-        //Act
-        var result = await service.CreateAsync(dto);
-
-        //Assert
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().NotBeNull();
-        result.Error.Code.Should().Be(MemberErrors.EmptyOrNullName.Code);
-    }
-
-    [Theory]
-    [InlineData("")]
-    [InlineData(" ")]
-    public async Task CreateAsync_NullOrEmptyEmail_ReturnsFailure(string email)
-    {
-        await using var context = TestDbContextFactory.Create();
-        var service = new MemberService(context, _membershipTypeService.Object, _logger.Object,
-            _membershipService.Object);
-
-        var type = new MembershipType("Basic", 9.99m, 1);
-        context.MembershipTypes.Add(type);
-        await context.SaveChangesAsync();
-
-        var dto = new MemberCreateDto("testName", email, "testPhone", type.PublicId);
-
-        //Act
-        var result = await service.CreateAsync(dto);
-
-        //Assert
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().NotBeNull();
-        result.Error.Code.Should().Be(MemberErrors.EmptyOrNullEmail.Code);
-    }
-
     [Fact]
     public async Task CreateAsync_AlreadyExistentEmail_ReturnsFailure()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new MemberService(context, _membershipTypeService.Object, _logger.Object,
-            _membershipService.Object);
+        var service = new MemberService(context, _logger.Object);
+
 
         var type = new MembershipType("Basic", 9.99m, 1);
         context.MembershipTypes.Add(type);
@@ -210,33 +158,11 @@ public class MemberServiceTests
     }
 
     [Fact]
-    public async Task CreateAsync_InvalidEmailFormat_ReturnsFailure()
-    {
-        await using var context = TestDbContextFactory.Create();
-        var service = new MemberService(context, _membershipTypeService.Object, _logger.Object,
-            _membershipService.Object);
-
-        var type = new MembershipType("Basic", 9.99m, 1);
-        context.MembershipTypes.Add(type);
-        await context.SaveChangesAsync();
-
-        var dto = new MemberCreateDto("testName", "falseEmail", "testPhone", type.PublicId);
-
-        //Act
-        var result = await service.CreateAsync(dto);
-
-        //Assert
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().NotBeNull();
-        result.Error.Code.Should().Be(MemberErrors.InvalidEmailFormat.Code);
-    }
-
-    [Fact]
     public async Task CreateAsync_InvalidMembershipTypePublicId_ReturnsFailure()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new MemberService(context, _membershipTypeService.Object, _logger.Object,
-            _membershipService.Object);
+        var service = new MemberService(context, _logger.Object);
+
         var inexistentGuid = Guid.NewGuid();
         var dto = new MemberCreateDto("testName", "test@gmail.com", "testPhone", inexistentGuid);
 
@@ -257,8 +183,8 @@ public class MemberServiceTests
     public async Task UpdateAsync_ValidData_ReturnsSuccess()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new MemberService(context, _membershipTypeService.Object, _logger.Object,
-            _membershipService.Object);
+        var service = new MemberService(context, _logger.Object);
+
         var existentMember = new Member("test", "test@gmail.com", "1111-1111");
         context.Members.Add(existentMember);
         await context.SaveChangesAsync();
@@ -281,8 +207,7 @@ public class MemberServiceTests
     public async Task UpdateAsync_DuplicatedEmailFromOtherUser_ReturnsFailure()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new MemberService(context, _membershipTypeService.Object, _logger.Object,
-            _membershipService.Object);
+        var service = new MemberService(context, _logger.Object);
         
         var existentMember = new Member("test", "test@gmail.com", "1111-1111");
         context.Members.Add(existentMember);
@@ -305,8 +230,8 @@ public class MemberServiceTests
     public async Task UpdateAsync_InvalidGuid_ReturnsFailure()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new MemberService(context, _membershipTypeService.Object, _logger.Object,
-            _membershipService.Object);
+        var service = new MemberService(context, _logger.Object);
+
         var existentGuid = Guid.NewGuid();
         var updatedMember = new MemberUpdateDto("test", "test@gmail.com", "1111-1111");
         
@@ -327,8 +252,8 @@ public class MemberServiceTests
     public async Task DeleteAsync_ValidPublicId_ReturnsSuccess()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new MemberService(context, _membershipTypeService.Object, _logger.Object,
-            _membershipService.Object);
+        var service = new MemberService(context, _logger.Object);
+
         
         var member = new Member("test", "test@gmail.com", "1111-1111");
         context.Members.Add(member);
@@ -347,8 +272,7 @@ public class MemberServiceTests
     public async Task DeleteAsync_InvalidGuid_ReturnsFailure()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new MemberService(context, _membershipTypeService.Object, _logger.Object,
-            _membershipService.Object);
+        var service = new MemberService(context, _logger.Object);
         
         var member = new Member("test", "test@gmail.com", "1111-1111");
         context.Members.Add(member);

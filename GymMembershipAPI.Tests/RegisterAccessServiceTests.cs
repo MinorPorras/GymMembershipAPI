@@ -2,7 +2,7 @@
 using GymMembershipAPI.API.DTOs.RegisterAccess;
 using GymMembershipAPI.API.Services;
 using GymMembershipAPI.Domain.Entities;
-using GymMembershipAPI.Domain.results;
+using GymMembershipAPI.Domain.Results;
 using GymMembershipAPI.Tests.Helpers;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -43,7 +43,7 @@ public class RegisterAccessServiceTests
 
 
         var accessDate = DateTime.UtcNow;
-        var dto = new RegisterAccessRequestDto(member.PublicId, accessDate);
+        var dto = new RegisterAccessRequestDto(member.PublicId);
 
         //Act
         var result = await service.RegisterAsync(dto);
@@ -53,50 +53,9 @@ public class RegisterAccessServiceTests
         result.Value.Should().NotBeNull();
 
         result.Value.MemberId.Should().Be(member.Id);
-        result.Value.AccessDate.Should().Be(accessDate);
+        result.Value.AccessDate.Should().BeCloseTo(accessDate, TimeSpan.FromSeconds(1));
         result.Value.AllowAccess.Should().BeTrue();
         result.Value.PublicId.Should().NotBeEmpty();
-    }
-
-    [Fact]
-    public async Task RegisterAsync_InvalidData_ReturnFailure()
-    {
-        await using var context = TestDbContextFactory.Create();
-        var service = new RegisterAccessService(_logger.Object, context);
-
-        var member = new Member("Test Member", "member@email.com", "8888-8888");
-        context.Members.Add(member);
-
-        var membershipType = new MembershipType("Test Type", 9.99m, 1);
-        context.MembershipTypes.Add(membershipType);
-
-        await context.SaveChangesAsync();
-
-        var membership = new Membership
-        {
-            MemberId = member.Id,
-            MembershipTypeId = membershipType.Id,
-            StartDate = DateTime.UtcNow.AddDays(-1),
-            EndDate = DateTime.UtcNow.AddDays(30),
-            IsActive = true
-        };
-        context.Memberships.Add(membership);
-        await context.SaveChangesAsync();
-
-        var accessDate = DateTime.UtcNow.AddDays(-1);
-        var dto = new RegisterAccessRequestDto(member.PublicId, accessDate);
-
-        //Act
-        var result = await service.RegisterAsync(dto);
-
-        //Assert
-        result.IsFailure.Should().BeTrue();
-        result.Value.Should().BeNull();
-        result.Error.Should().NotBeNull();
-        result.Error.Code.Should().Be(RegisterAccessErrors.InvalidDate.Code);
-
-        var savedEntities = context.RegisterAccesses.Count();
-        savedEntities.Should().Be(0);
     }
 
     [Fact]
@@ -105,9 +64,8 @@ public class RegisterAccessServiceTests
         await using var context = TestDbContextFactory.Create();
         var service = new RegisterAccessService(_logger.Object, context);
 
-        var accessDate = DateTime.UtcNow;
         var inexistentGuid = Guid.NewGuid();
-        var dto = new RegisterAccessRequestDto(inexistentGuid, accessDate);
+        var dto = new RegisterAccessRequestDto(inexistentGuid);
 
         //Act
         var result = await service.RegisterAsync(dto);
@@ -133,7 +91,7 @@ public class RegisterAccessServiceTests
         await context.SaveChangesAsync();
 
         var accessDate = DateTime.UtcNow;
-        var dto = new RegisterAccessRequestDto(member.PublicId, accessDate);
+        var dto = new RegisterAccessRequestDto(member.PublicId);
 
         //Act
         var result = await service.RegisterAsync(dto);
@@ -142,7 +100,7 @@ public class RegisterAccessServiceTests
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
         result.Value.MemberId.Should().Be(member.Id);
-        result.Value.AccessDate.Should().Be(accessDate);
+        result.Value.AccessDate.Should().BeCloseTo(accessDate, TimeSpan.FromSeconds(1));
         result.Value.AllowAccess.Should().BeFalse();
 
         var savedEntities = context.RegisterAccesses.Count();
@@ -322,7 +280,7 @@ public class RegisterAccessServiceTests
     }
 
     [Fact]
-    public async Task GetByMemberPublicIdAsync_InvalidPublicId_ReturnFailure()
+    public async Task GetByMemberPublicIdAsync_InvalidPublicId_ReturnSuccessAndEmptyList()
     {
         await using var context = TestDbContextFactory.Create();
         var service = new RegisterAccessService(_logger.Object, context);
@@ -332,9 +290,8 @@ public class RegisterAccessServiceTests
         var result = await service.GetByMemberPublicIdAsync(inexistentGuid);
 
         //Assert
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().NotBeNull();
-        result.Error.Code.Should().Be(RegisterAccessErrors.NotFound.Code);
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Count.Should().Be(0);
     }
 
     #endregion

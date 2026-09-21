@@ -2,10 +2,9 @@
 using GymMembershipAPI.API.Mappers;
 using GymMembershipAPI.Domain.Entities;
 using GymMembershipAPI.Domain.Interfaces;
-using GymMembershipAPI.Domain.results;
+using GymMembershipAPI.Domain.Results;
 using GymMembershipAPI.Infraestructure.Data;
 using Microsoft.EntityFrameworkCore;
-using static System.String;
 
 namespace GymMembershipAPI.API.Services;
 
@@ -20,25 +19,10 @@ public class GroupClassService : IGroupClassService
         _context = context;
     }
 
-    private async Task<Result> IsValidDto(GroupClassRequestDto dto, Guid? excludePubliId = null)
-    {
-        if (IsNullOrWhiteSpace(dto.Name)) return Result.Failure(GroupClassErrors.EmptyOrNullName);
-
-        var nameAlredyExists = await _context.GroupClasses
-            .AnyAsync(c => c.Name == dto.Name && c.PublicId != excludePubliId);
-        if (nameAlredyExists)
-            return Result.Failure(GroupClassErrors.NameAlreadyExists);
-
-        if (IsNullOrWhiteSpace(dto.Instructor))
-            return Result.Failure(GroupClassErrors.EmptyOrNullInstructor);
-
-        if (dto.DateHour.Date < DateTime.UtcNow.Date)
-            return Result.Failure(GroupClassErrors.InvalidDate);
-
-        if (dto.MaxMembers <= 0) return Result.Failure(GroupClassErrors.InvalidMaxMembers);
-
-        return Result.Success();
-    }
+    private async Task<Result> IsValidDto(GroupClassRequestDto dto, Guid? excludePubliId = null) =>
+        dto.DateHour.Date < DateTime.UtcNow.Date
+            ? Result.Failure(GroupClassErrors.InvalidDate)
+            : Result.Success();
 
     public async Task<Result<GroupClass>> GetByPublicIdAsync(Guid publicId)
     {
@@ -64,6 +48,11 @@ public class GroupClassService : IGroupClassService
     {
         var isValid = await IsValidDto(dto);
         if (isValid.IsFailure) return Result<GroupClass>.Failure(isValid.Error);
+
+        var nameAlreadyExists = await _context.GroupClasses.AnyAsync(c => c.Name == dto.Name);
+        if (nameAlreadyExists)
+            return Result<GroupClass>.Failure(GroupClassErrors.NameAlreadyExists);
+
         var entity = GroupClassMapper.ToEntity(dto);
         try
         {
@@ -97,11 +86,19 @@ public class GroupClassService : IGroupClassService
 
     public async Task<Result<GroupClass>> UpdateAsync(Guid publicId, GroupClassRequestDto dto)
     {
-        var isValid = await IsValidDto(dto, publicId);
+        var existingClass = await _context.GroupClasses.FirstOrDefaultAsync(c => c.PublicId == publicId);
+        if (existingClass == null)
+            return Result<GroupClass>.Failure(GroupClassErrors.NotFound);
+
+        var isValid = await IsValidDto(dto);
         if (isValid.IsFailure) return Result<GroupClass>.Failure(isValid.Error);
 
-        var existingClass = await _context.GroupClasses.FirstOrDefaultAsync(c => c.PublicId == publicId);
-        if (existingClass == null) return Result<GroupClass>.Failure(GroupClassErrors.NotFound);
+        if (existingClass.Name != dto.Name)
+        {
+            var nameAlreadyExists = await _context.GroupClasses.AnyAsync(c => c.Name == dto.Name);
+            if (nameAlreadyExists)
+                return Result<GroupClass>.Failure(GroupClassErrors.NameAlreadyExists);
+        }
 
         try
         {

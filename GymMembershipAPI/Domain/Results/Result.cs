@@ -1,4 +1,4 @@
-﻿namespace GymMembershipAPI.Domain.results;
+﻿namespace GymMembershipAPI.Domain.Results;
 
 public class Result<T>
 {

@@ -1,59 +1,22 @@
-﻿using System.ComponentModel.DataAnnotations;
-using GymMembershipAPI.API.DTOs.Members;
-using GymMembershipAPI.API.DTOs.Membership;
+﻿using GymMembershipAPI.API.DTOs.Members;
 using GymMembershipAPI.API.Mappers;
 using GymMembershipAPI.Domain.Entities;
 using GymMembershipAPI.Domain.Interfaces;
-using GymMembershipAPI.Domain.results;
 using GymMembershipAPI.Domain.Results;
 using GymMembershipAPI.Infraestructure.Data;
 using Microsoft.EntityFrameworkCore;
-using static System.String;
 
 namespace GymMembershipAPI.API.Services;
 
 public class MemberService : IMemberService
 {
     private readonly GymDbContext _context;
-    private readonly IMembershipTypeService _memberTypeService;
     private readonly ILogger<MemberService> _logger;
-    private readonly IMembershipService _membershipService;
 
-    public MemberService(GymDbContext context, IMembershipTypeService memberTypeService, ILogger<MemberService> logger,
-        IMembershipService membershipService)
+    public MemberService(GymDbContext context, ILogger<MemberService> logger)
     {
         _context = context;
-        _memberTypeService = memberTypeService;
         _logger = logger;
-        _membershipService = membershipService;
-    }
-
-    private async Task<Result> IsValidUpdateDtoAsync(Guid publicId, MemberUpdateDto dto)
-    {
-        if (IsNullOrWhiteSpace(dto.Name)) return Result.Failure(MemberErrors.EmptyOrNullName);
-        if (IsNullOrWhiteSpace(dto.Email)) return Result.Failure(MemberErrors.EmptyOrNullEmail);
-
-        var exists = await _context.Members.AnyAsync(x => x.Email == dto.Email && x.PublicId != publicId);
-        if (exists) return Result.Failure(MemberErrors.EmailAlreadyExists);
-
-        var attribute = new EmailAddressAttribute();
-        return attribute.IsValid(dto.Email)
-            ? Result.Success()
-            : Result.Failure(MemberErrors.InvalidEmailFormat);
-    }
-
-    private async Task<Result> IsValidCreateDtoAsync(MemberCreateDto dto)
-    {
-        if (IsNullOrWhiteSpace(dto.Name)) return Result.Failure(MemberErrors.EmptyOrNullName);
-        if (IsNullOrWhiteSpace(dto.Email)) return Result.Failure(MemberErrors.EmptyOrNullEmail);
-
-        var exists = await _context.Members.AnyAsync(x => x.Email == dto.Email);
-        if (exists) return Result.Failure(MemberErrors.EmailAlreadyExists);
-
-        var attribute = new EmailAddressAttribute();
-        return attribute.IsValid(dto.Email)
-            ? Result.Success()
-            : Result.Failure(MemberErrors.InvalidEmailFormat);
     }
 
     public async Task<Result<Member>> GetByPublicIdAsync(Guid publicId)
@@ -89,12 +52,18 @@ public class MemberService : IMemberService
 
     public async Task<Result<Member>> CreateAsync(MemberCreateDto dto)
     {
-        var isValid = await IsValidCreateDtoAsync(dto);
-        if (isValid.IsFailure) return Result<Member>.Failure(isValid.Error);
         var membershipType = await _context.MembershipTypes
             .FirstOrDefaultAsync(t => t.PublicId == dto.MembershipTypePublicId);
+
         if (membershipType == null)
             return Result<Member>.Failure(MembershipTypeErrors.NotFound);
+
+        // Validar email duplicado
+        var emailExists = await _context.Members
+            .AnyAsync(x => x.Email == dto.Email);
+
+        if (emailExists)
+            return Result<Member>.Failure(MemberErrors.EmailAlreadyExists);
 
         var entity = MemberMapper.ToEntity(dto);
 
@@ -122,8 +91,9 @@ public class MemberService : IMemberService
 
     public async Task<Result<Member>> UpdateAsync(Guid publicId, MemberUpdateDto dto)
     {
-        var isValid = await IsValidUpdateDtoAsync(publicId, dto);
-        if (isValid.IsFailure) return Result<Member>.Failure(isValid.Error);
+        var emailExists = await _context.Members
+            .AnyAsync(x => x.Email == dto.Email && x.PublicId != publicId);
+        if (emailExists) return Result<Member>.Failure(MemberErrors.EmailAlreadyExists);
 
         var entity = await _context.Members.FirstOrDefaultAsync(x => x.PublicId == publicId);
         if (entity == null) return Result<Member>.Failure(MemberErrors.NotFound);

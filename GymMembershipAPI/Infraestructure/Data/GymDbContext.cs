@@ -1,5 +1,7 @@
 ﻿using GymMembershipAPI.Domain.Entities;
+using GymMembershipAPI.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace GymMembershipAPI.Infraestructure.Data;
 
@@ -17,6 +19,7 @@ public class GymDbContext : DbContext
     public DbSet<Booking> Bookings { get; set; }
     public DbSet<RegisterAccess> RegisterAccesses { get; set; }
     public DbSet<Membership> Memberships { get; set; }
+    public DbSet<User> Users { get; set; }
 
     // Configuraciones de relaciones y reglas con FLUENT API
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -78,6 +81,20 @@ public class GymDbContext : DbContext
                 .HasColumnName("xmin")
                 .HasColumnType("xid")
                 .ValueGeneratedOnAddOrUpdate();
+        });
+
+        modelBuilder.Entity<User>(entity =>
+        {
+            entity.HasIndex(e => e.Email).IsUnique();
+
+            entity.Property(u => u.Role)
+                .HasConversion(new EnumToStringConverter<UserRole>())
+                .HasMaxLength(20);
+            
+            entity.HasOne(e => e.Member)
+                .WithMany()
+                .HasForeignKey(e => e.MemberId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

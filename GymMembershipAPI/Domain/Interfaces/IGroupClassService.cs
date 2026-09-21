@@ -1,6 +1,6 @@
 ﻿using GymMembershipAPI.API.DTOs.GroupClass;
 using GymMembershipAPI.Domain.Entities;
-using GymMembershipAPI.Domain.results;
+using GymMembershipAPI.Domain.Results;
 
 namespace GymMembershipAPI.Domain.Interfaces;
 

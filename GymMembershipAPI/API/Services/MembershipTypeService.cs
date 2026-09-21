@@ -2,7 +2,6 @@
 using GymMembershipAPI.API.DTOs.MembershipType;
 using GymMembershipAPI.Domain.Entities;
 using GymMembershipAPI.Domain.Interfaces;
-using GymMembershipAPI.Domain.results;
 using GymMembershipAPI.Domain.Results;
 using GymMembershipAPI.Infraestructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -21,21 +20,6 @@ public class MembershipTypeService : IMembershipTypeService
     {
         _context = context;
         _logger = logger;
-    }
-
-    // Validation
-    private static Result IsValidDto(MembershipTypeRequestDto requestDto)
-    {
-        if (IsNullOrWhiteSpace(requestDto.Name))
-            return Result.Failure(MembershipTypeErrors.InvalidName);
-
-        if (requestDto.Price <= 0)
-            return Result.Failure(MembershipTypeErrors.InvalidPrice);
-
-        if (requestDto.DurationMonths <= 0)
-            return Result.Failure(MembershipTypeErrors.InvalidMonthDuration);
-
-        return Result.Success();
     }
 
     private async Task<bool> ExistsAsync(Guid publicId)
@@ -61,17 +45,13 @@ public class MembershipTypeService : IMembershipTypeService
 
     public async Task<Result<MembershipType>> CreateAsync(MembershipTypeRequestDto requestDto)
     {
-        var hasValidData = IsValidDto(requestDto);
-        if (hasValidData.IsFailure)
-            return Result<MembershipType>.Failure(hasValidData.Error);
-
         if (await ExistsByNameAsync(requestDto.Name))
             return Result<MembershipType>.Failure(MembershipTypeErrors.AlreadyExists);
 
         var entity = MembershipTypeMapper.ToEntity(requestDto);
         try
         {
-            await _context.MembershipTypes.AddAsync(entity);
+            _context.MembershipTypes.Add(entity);
             await _context.SaveChangesAsync();
             return Result<MembershipType>.Success(entity);
         }
@@ -86,13 +66,10 @@ public class MembershipTypeService : IMembershipTypeService
 
     public async Task<Result<MembershipType>> UpdateAsync(Guid publicId, MembershipTypeRequestDto dto)
     {
-        var hasValidData = IsValidDto(dto);
-        if (hasValidData.IsFailure)
-            return Result<MembershipType>.Failure(hasValidData.Error);
-
-        var nameAlreadyExists = await _context.MembershipTypes.AnyAsync(x => x.Name == dto.Name &&  x.PublicId != publicId);
+        var nameAlreadyExists =
+            await _context.MembershipTypes.AnyAsync(x => x.Name == dto.Name && x.PublicId != publicId);
         if (nameAlreadyExists) return Result<MembershipType>.Failure(MembershipTypeErrors.AlreadyExists);
-        
+
         var existingType = await _context.MembershipTypes.FirstOrDefaultAsync(x => x.PublicId == publicId);
         if (existingType == null) return Result<MembershipType>.Failure(MembershipTypeErrors.NotFound);
 

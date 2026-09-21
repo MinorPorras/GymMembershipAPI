@@ -7,8 +7,7 @@ public class BookingMapper
 {
     public static Booking ToEntity(BookingRequestDto dto) => new Booking()
     {
-        CreatedAt = DateTime.UtcNow,
-        State = "Confirmada"
+
     };
 
     public static BookingResponseDto ToDto(Booking entity) => new(

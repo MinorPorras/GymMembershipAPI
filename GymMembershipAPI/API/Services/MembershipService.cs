@@ -2,7 +2,7 @@
 using GymMembershipAPI.API.Mappers;
 using GymMembershipAPI.Domain.Entities;
 using GymMembershipAPI.Domain.Interfaces;
-using GymMembershipAPI.Domain.results;
+using GymMembershipAPI.Domain.Results;
 using GymMembershipAPI.Infraestructure.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -32,40 +32,36 @@ public class MembershipService : IMembershipService
 
     public async Task<Result<List<Membership>>> GetActiveByMemberPublicId(Guid memberPublicId)
     {
-        var existingMember =
-            await _context.Members.FirstOrDefaultAsync(e => e.PublicId == memberPublicId);
-        if (existingMember == null) return Result<List<Membership>>.Failure(MembershipErrors.MemberNotFound);
-        var list = await _context.Memberships.Where(e => e.IsActive && e.MemberId == existingMember.Id)
+        var list = await _context.Memberships
+            .Where(e => e.Member.PublicId == memberPublicId && e.IsActive)
             .ToListAsync();
+
         return Result<List<Membership>>.Success(list);
     }
 
     public async Task<Result<List<Membership>>> GetHistoryByMemberPublicIdAsync(Guid memberPublicId)
     {
-        var existingMember =
-            await _context.Members.FirstOrDefaultAsync(e => e.PublicId == memberPublicId);
-        if (existingMember == null) return Result<List<Membership>>.Failure(MembershipErrors.MemberNotFound);
-        var list = await _context.Memberships.Where(m => m.MemberId == existingMember.Id)
-            .OrderByDescending(m => m.StartDate).ToListAsync();
+        var list = await _context.Memberships
+            .Where(m => m.Member.PublicId == memberPublicId)
+            .OrderByDescending(m => m.StartDate)
+            .ToListAsync();
+
         return Result<List<Membership>>.Success(list);
     }
 
     public async Task<Result<Membership>> CreateAsync(MembershipRequestDto dto)
     {
-        var existingMember =
-            await _context.Members.FirstOrDefaultAsync(e => e.PublicId == dto.MemberPublicId);
-        if (existingMember == null) return Result<Membership>.Failure(MembershipErrors.MemberNotFound);
+        var existingMember = await _context.Members
+            .FirstOrDefaultAsync(e => e.PublicId == dto.MemberPublicId);
 
-        var existingMembershipType =
-            await _context.MembershipTypes.FirstOrDefaultAsync(e => e.PublicId == dto.MembershipTypePublicId);
-        if (existingMembershipType == null) return Result<Membership>.Failure(MembershipErrors.MembershipTypeNotFound);
+        if (existingMember == null)
+            return Result<Membership>.Failure(MembershipErrors.MemberNotFound);
 
-        var entity = MembershipMapper.ToEntity();
-        entity.MemberId = existingMember.Id;
-        entity.MembershipTypeId = existingMembershipType.Id;
-        entity.StartDate = DateTime.UtcNow;
-        entity.EndDate = entity.StartDate.AddMonths(existingMembershipType.DurationMonths);
-        entity.IsActive = true;
+        var existingMembershipType = await _context.MembershipTypes
+            .FirstOrDefaultAsync(e => e.PublicId == dto.MembershipTypePublicId);
+
+        if (existingMembershipType == null)
+            return Result<Membership>.Failure(MembershipErrors.MembershipTypeNotFound);
 
         var activeMemberships = await _context.Memberships
             .Where(e => e.MemberId == existingMember.Id && e.IsActive)
@@ -76,6 +72,15 @@ public class MembershipService : IMembershipService
             prevMembership.IsActive = false;
             prevMembership.EndDate = DateTime.UtcNow;
         }
+
+        var entity = new Membership
+        {
+            MemberId = existingMember.Id,
+            MembershipTypeId = existingMembershipType.Id,
+            StartDate = DateTime.UtcNow,
+            EndDate = DateTime.UtcNow.AddMonths(existingMembershipType.DurationMonths),
+            IsActive = true
+        };
 
         try
         {

@@ -2,7 +2,7 @@
 using GymMembershipAPI.API.DTOs.GroupClass;
 using GymMembershipAPI.API.Services;
 using GymMembershipAPI.Domain.Entities;
-using GymMembershipAPI.Domain.results;
+using GymMembershipAPI.Domain.Results;
 using GymMembershipAPI.Tests.Helpers;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -156,24 +156,6 @@ public class GroupClassServiceTests
         result.Value.MaxMembers.Should().Be(dto.MaxMembers);
     }
 
-    [Theory]
-    [InlineData("")]
-    [InlineData(" ")]
-    public async Task CreateAsync_EmptyOrNullName_ReturnsFailure(string name)
-    {
-        await using var context = TestDbContextFactory.Create();
-        var service = new GroupClassService(_logger.Object, context);
-        var dto = new GroupClassRequestDto(name, "testInstructor", DateTime.UtcNow.AddDays(3), 1);
-
-        //Act
-        var result = await service.CreateAsync(dto);
-
-        //Assert
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().NotBeNull();
-        result.Error.Code.Should().Be(GroupClassErrors.EmptyOrNullName.Code);
-    }
-
     [Fact]
     public async Task CreateAsync_DuplicatedName_ReturnsFailure()
     {
@@ -205,24 +187,6 @@ public class GroupClassServiceTests
         count.Should().Be(1);
     }
 
-    [Theory]
-    [InlineData("")]
-    [InlineData(" ")]
-    public async Task CreateAsync_EmptyOrNullInstructor_ReturnsFailure(string instructor)
-    {
-        await using var context = TestDbContextFactory.Create();
-        var service = new GroupClassService(_logger.Object, context);
-        var dto = new GroupClassRequestDto("test", instructor, DateTime.UtcNow.AddDays(3), 1);
-
-        //Act
-        var result = await service.CreateAsync(dto);
-
-        //Assert
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().NotBeNull();
-        result.Error.Code.Should().Be(GroupClassErrors.EmptyOrNullInstructor.Code);
-    }
-
     [Fact]
     public async Task CreateAsync_DateOlderThanToday_ReturnsFailure()
     {
@@ -237,24 +201,6 @@ public class GroupClassServiceTests
         result.IsFailure.Should().BeTrue();
         result.Error.Should().NotBeNull();
         result.Error.Code.Should().Be(GroupClassErrors.InvalidDate.Code);
-    }
-
-    [Theory]
-    [InlineData(0)]
-    [InlineData(-1)]
-    public async Task CreateAsync_MaxMembersLessThanOne_ReturnsFailure(int maxMembers)
-    {
-        await using var context = TestDbContextFactory.Create();
-        var service = new GroupClassService(_logger.Object, context);
-        var dto = new GroupClassRequestDto("test", "testInstructor", DateTime.UtcNow.AddDays(1), maxMembers);
-
-        //Act
-        var result = await service.CreateAsync(dto);
-
-        //Assert
-        result.IsFailure.Should().BeTrue();
-        result.Error.Should().NotBeNull();
-        result.Error.Code.Should().Be(GroupClassErrors.InvalidMaxMembers.Code);
     }
 
     #endregion

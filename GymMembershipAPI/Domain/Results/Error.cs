@@ -1,4 +1,4 @@
-﻿namespace GymMembershipAPI.Domain.results;
+﻿namespace GymMembershipAPI.Domain.Results;
 
 public record Error(string Code, string Message)
 {

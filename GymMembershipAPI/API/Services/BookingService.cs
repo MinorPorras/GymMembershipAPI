@@ -2,7 +2,7 @@
 using GymMembershipAPI.API.Mappers;
 using GymMembershipAPI.Domain.Entities;
 using GymMembershipAPI.Domain.Interfaces;
-using GymMembershipAPI.Domain.results;
+using GymMembershipAPI.Domain.Results;
 using GymMembershipAPI.Infraestructure.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -77,8 +77,9 @@ public class BookingService : IBookingService
         if (groupClass == null) return Result<Booking>.Failure(BookingErrors.GroupClassNotFound);
 
         // Validaciones en memoria
-        var activeBookings = groupClass.Bookings.Count(b => b.State != "Cancelada");
-        if (activeBookings >= groupClass.MaxMembers)
+        var activeBookingsCount = await _context.Bookings.CountAsync(b =>
+            b.GroupClassId == groupClass.Id && b.State != "Cancelled");
+        if (activeBookingsCount >= groupClass.MaxMembers)
             return Result<Booking>.Failure(BookingErrors.ClassIsFull);
 
         var alreadyBooked = groupClass.Bookings.Any(b =>
@@ -86,7 +87,12 @@ public class BookingService : IBookingService
         if (alreadyBooked)
             return Result<Booking>.Failure(BookingErrors.AlreadyBooked);
 
-        var entity = BookingMapper.ToEntity(dto);
+        var entity = new Booking()
+        {
+            GroupClassId = groupClass.Id,
+            CreatedAt = DateTime.UtcNow,
+            State = "Confirmada"
+        };
         entity.GroupClassId = groupClass.Id;
         entity.MemberId = member.Id;
 
@@ -116,10 +122,10 @@ public class BookingService : IBookingService
         var entity = await _context.Bookings.FirstOrDefaultAsync(e => e.PublicId == publicId);
         if (entity == null)
             return Result.Failure(BookingErrors.NotFound);
-        if (entity.State == "Cancelled")
+        if (entity.State == "Cancelada")
             return Result.Failure(BookingErrors.AlreadyCancelled);
 
-        entity.State = "Cancelled";
+        entity.State = "Cancelada";
         await _context.SaveChangesAsync();
         return Result.Success();
     }
