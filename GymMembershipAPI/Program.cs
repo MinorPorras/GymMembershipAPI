@@ -13,8 +13,10 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 
+var connString = builder.Configuration.GetConnectionString("DefaultConn");
+
 builder.Services.AddDbContext<GymDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConn")));
+    options.UseNpgsql(connString));
 
 builder.Services.AddScoped<IMembershipTypeService, MembershipTypeService>();
 builder.Services.AddScoped<IMemberService, MemberService>();
@@ -28,6 +30,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApi();
 builder.Services.AddSwaggerGen();
+builder.Services.AddHealthChecks().AddNpgSql(connString!);
 
 //JWT config
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -69,4 +72,5 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHealthChecks("/health");
 app.Run();

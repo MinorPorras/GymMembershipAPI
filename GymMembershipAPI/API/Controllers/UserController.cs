@@ -7,7 +7,7 @@ namespace GymMembershipAPI.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
+[Authorize] // Todo el controller protegido
 public class UserController : ControllerBase
 {
     private readonly IUserService _userService;
@@ -17,6 +17,7 @@ public class UserController : ControllerBase
         _userService = userService;
     }
 
+    // Hereda [Authorize] automáticamente
     [HttpGet("{userPublicId:guid}")]
     public async Task<IActionResult> GetyPublicIdAsync(Guid userPublicId)
     {
@@ -32,7 +33,7 @@ public class UserController : ControllerBase
     }
 
     [HttpPost]
-    [AllowAnonymous]
+    [AllowAnonymous] // Excepción: Público
     public async Task<IActionResult> CreateAsync([FromBody] UserCreateRequestDto dto)
     {
         var result = await _userService.CreateAsync(dto);
