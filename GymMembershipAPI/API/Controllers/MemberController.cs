@@ -24,18 +24,18 @@ public class MemberController : ControllerBase
     // GET
     [HttpGet]
     [Authorize(Roles = "Admin, Staff")]
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAll(CancellationToken ct)
     {
-        var result = await _service.GetAllAsync();
+        var result = await _service.GetAllAsync(ct);
         if (result.IsFailure) return BadRequest(result.Error.Message);
         var dtoList = MemberMapper.ToResponseDto(result.Value);
         return Ok(dtoList);
     }
 
     [HttpGet("{publicId}")]
-    public async Task<IActionResult> GetByPublicId(Guid publicId)
+    public async Task<IActionResult> GetByPublicId(Guid publicId, CancellationToken ct)
     {
-        var result = await _service.GetByPublicIdAsync(publicId);
+        var result = await _service.GetByPublicIdAsync(publicId, ct);
         if (result.IsFailure) return BadRequest(result.Error.Message);
         var dto = MemberMapper.ToResponseDto(result.Value);
         return Ok(dto);
@@ -44,9 +44,9 @@ public class MemberController : ControllerBase
     //POST
     [HttpPost]
     [Authorize(Roles = "Admin, Staff")]
-    public async Task<IActionResult> CreateAsync([FromBody] MemberCreateDto dto)
+    public async Task<IActionResult> CreateAsync([FromBody] MemberCreateDto dto, CancellationToken ct)
     {
-        var result = await _service.CreateAsync(dto);
+        var result = await _service.CreateAsync(dto, ct);
         if (result.IsFailure)
             return BadRequest(result.Error.Message);
         var response = MemberMapper.ToResponseDto(result.Value);
@@ -58,9 +58,10 @@ public class MemberController : ControllerBase
     // PUT
     [HttpPut("{publicId}")]
     [Authorize(Roles = "Admin, Staff")]
-    public async Task<IActionResult> UpdateAsync([FromRoute] Guid publicId, [FromBody] MemberUpdateDto dto)
+    public async Task<IActionResult> UpdateAsync([FromRoute] Guid publicId, [FromBody] MemberUpdateDto dto,
+        CancellationToken ct)
     {
-        var result = await _service.UpdateAsync(publicId, dto);
+        var result = await _service.UpdateAsync(publicId, dto, ct);
         if (result.IsFailure)
             return result.Error.Code == MemberErrors.NotFound.Code
                 ? NotFound(result.Error.Message)
@@ -73,9 +74,9 @@ public class MemberController : ControllerBase
     //DELETE
     [HttpDelete(("{publicId}"))]
     [Authorize(Roles = "Admin, Staff")]
-    public async Task<IActionResult> DeleteAsync([FromRoute] Guid publicId)
+    public async Task<IActionResult> DeleteAsync([FromRoute] Guid publicId, CancellationToken ct)
     {
-        var result = await _service.DeleteAsync(publicId);
+        var result = await _service.DeleteAsync(publicId, ct);
         return result.IsFailure
             ? BadRequest(result.Error.Message)
             : NoContent();

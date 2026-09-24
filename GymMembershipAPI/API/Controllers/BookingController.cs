@@ -21,55 +21,55 @@ public class BookingController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAll(CancellationToken ct)
     {
-        var result = await _bookingService.GetAllAsync();
+        var result = await _bookingService.GetAllAsync(ct);
         var response = BookingMapper.ToResponseDtos(result.Value);
         return Ok(response);
     }
 
     [HttpGet("{publicId:guid}")]
-    public async Task<IActionResult> GetByPublicId([FromRoute] Guid publicId)
+    public async Task<IActionResult> GetByPublicId([FromRoute] Guid publicId, CancellationToken ct)
     {
-        var result = await _bookingService.GetByPublicIdAsync(publicId);
+        var result = await _bookingService.GetByPublicIdAsync(publicId, ct);
         if (result.IsFailure) return NotFound(new { message = result.Error.Message });
         var response = BookingMapper.ToResponseDto(result.Value);
         return Ok(response);
     }
 
     [HttpGet("member/{memberId:guid}")]
-    public async Task<IActionResult> GetByMemberPublicId([FromRoute] Guid memberId)
+    public async Task<IActionResult> GetByMemberPublicId([FromRoute] Guid memberId, CancellationToken ct)
     {
-        var result = await _bookingService.GetByMemberPublicIdAsync(memberId);
+        var result = await _bookingService.GetByMemberPublicIdAsync(memberId, ct);
         var response = BookingMapper.ToResponseDtos(result.Value);
         return Ok(response);
     }
 
     [HttpGet("class/{groupClassId:guid}")]
-    public async Task<IActionResult> GetByGroupClassId([FromRoute] Guid groupClassId)
+    public async Task<IActionResult> GetByGroupClassId([FromRoute] Guid groupClassId, CancellationToken ct)
     {
-        var result = await _bookingService.GetByClassPublicIdAsync(groupClassId);
+        var result = await _bookingService.GetByClassPublicIdAsync(groupClassId, ct);
         var response = BookingMapper.ToResponseDtos(result.Value);
         return Ok(response);
     }
 
     [HttpGet("me/bookings")]
     [Authorize]
-    public async Task<IActionResult> GetMyBookings()
+    public async Task<IActionResult> GetMyBookings(CancellationToken ct)
     {
         var memberPublicId = GetMemberPublicIdFromToken();
         if (memberPublicId == null) return Forbid("Solo miembros puede ver sus propias reservaciones aquí.");
 
-        var result = await _bookingService.GetByMemberPublicIdAsync(memberPublicId.Value);
+        var result = await _bookingService.GetByMemberPublicIdAsync(memberPublicId.Value, ct);
         var response = BookingMapper.ToResponseDtos(result.Value);
         return Ok(response);
     }
 
     [HttpPost]
     [Authorize(Policy = "MemberAccess")]
-    public async Task<IActionResult> Create([FromBody] BookingRequestDto dto)
+    public async Task<IActionResult> Create([FromBody] BookingRequestDto dto, CancellationToken ct)
     {
-        var result = await _bookingService.CreateAsync(dto);
+        var result = await _bookingService.CreateAsync(dto, ct);
         if (result.IsFailure)
         {
             if (result.Error.Code == BookingErrors.ClassIsFull.Code)
@@ -85,9 +85,9 @@ public class BookingController : ControllerBase
     }
 
     [HttpDelete("{publicId:guid}")]
-    public async Task<IActionResult> Cancel([FromRoute] Guid publicId)
+    public async Task<IActionResult> Cancel([FromRoute] Guid publicId, CancellationToken ct)
     {
-        var result = await _bookingService.CancelAsync(publicId);
+        var result = await _bookingService.CancelAsync(publicId, ct);
         if (result.IsSuccess) return NoContent();
         return result.Error.Code == BookingErrors.NotFound.Code
             ? NotFound(new { message = result.Error.Message })

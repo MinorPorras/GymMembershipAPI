@@ -6,8 +6,8 @@ namespace GymMembershipAPI.Domain.Interfaces;
 
 public interface IRegisterAccessService : IServiceBase<RegisterAccess>
 {
-    public Task<Result<RegisterAccess>> RegisterAsync(RegisterAccessRequestDto dto);
-    public Task<Result<List<RegisterAccess>>> GetAllAsync();
-    public Task<Result<List<RegisterAccess>>> GetByDateAsync(DateTime date);
-    public Task<Result<List<RegisterAccess>>> GetByMemberPublicIdAsync(Guid memberPublicId);
+    public Task<Result<RegisterAccess>> RegisterAsync(RegisterAccessRequestDto dto, CancellationToken ct);
+    public Task<Result<List<RegisterAccess>>> GetAllAsync(CancellationToken ct);
+    public Task<Result<List<RegisterAccess>>> GetByDateAsync(DateTime date, CancellationToken ct);
+    public Task<Result<List<RegisterAccess>>> GetByMemberPublicIdAsync(Guid memberPublicId, CancellationToken ct);
 }

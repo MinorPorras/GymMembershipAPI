@@ -21,9 +21,9 @@ public class MembershipController : ControllerBase
 
 
     [HttpGet("{publicId:guid}")]
-    public async Task<IActionResult> GetByPublicId([FromRoute] Guid publicId)
+    public async Task<IActionResult> GetByPublicId([FromRoute] Guid publicId, CancellationToken ct)
     {
-        var result = await _service.GetByPublicIdAsync(publicId);
+        var result = await _service.GetByPublicIdAsync(publicId, ct);
         if (result.IsFailure)
             return NotFound(result.Error.Message);
         var response = MembershipMapper.ToResponseDto(result.Value);
@@ -31,9 +31,9 @@ public class MembershipController : ControllerBase
     }
 
     [HttpGet("member/{memberPubliId:guid}/active")]
-    public async Task<IActionResult> GetActiveByMember([FromRoute] Guid memberPubliId)
+    public async Task<IActionResult> GetActiveByMember([FromRoute] Guid memberPubliId, CancellationToken ct)
     {
-        var result = await _service.GetActiveByMemberPublicId(memberPubliId);
+        var result = await _service.GetActiveByMemberPublicId(memberPubliId, ct);
         if (result.IsFailure)
             return NotFound(result.Error.Message);
         var response = MembershipMapper.ToResponseDtos(result.Value);
@@ -41,9 +41,9 @@ public class MembershipController : ControllerBase
     }
 
     [HttpGet("member/{memberPublicId:guid}/history")]
-    public async Task<IActionResult> GetHistoryByMember([FromRoute] Guid memberPublicId)
+    public async Task<IActionResult> GetHistoryByMember([FromRoute] Guid memberPublicId, CancellationToken ct)
     {
-        var result = await _service.GetHistoryByMemberPublicIdAsync(memberPublicId);
+        var result = await _service.GetHistoryByMemberPublicIdAsync(memberPublicId, ct);
         if (result.IsFailure)
             return NotFound(new { message = result.Error.Message });
         var response = MembershipMapper.ToResponseDtos(result.Value);
@@ -52,13 +52,13 @@ public class MembershipController : ControllerBase
 
     [HttpGet("me/active")]
     [Authorize]
-    public async Task<IActionResult> GetMyActiveMembership()
+    public async Task<IActionResult> GetMyActiveMembership(CancellationToken ct)
     {
         var memberPublicId = GetMemberPublicIdFromToken();
         if (memberPublicId == null)
             return Forbid("Solo miembros puede consultar su propia membresía aquí.");
 
-        var result = await _service.GetActiveByMemberPublicId(memberPublicId.Value);
+        var result = await _service.GetActiveByMemberPublicId(memberPublicId.Value, ct);
         if (result.IsFailure) return NotFound(new { message = result.Error.Message });
 
         var response = MembershipMapper.ToResponseDtos(result.Value);
@@ -67,13 +67,13 @@ public class MembershipController : ControllerBase
 
     [HttpGet("me/history")]
     [Authorize]
-    public async Task<IActionResult> GetMyMembershipHistory()
+    public async Task<IActionResult> GetMyMembershipHistory(CancellationToken ct)
     {
         var memberPublicId = GetMemberPublicIdFromToken();
         if (memberPublicId == null)
             return Forbid("Solo miembros puede consultar su propio historial de membresías aquí");
 
-        var result = await _service.GetHistoryByMemberPublicIdAsync(memberPublicId.Value);
+        var result = await _service.GetHistoryByMemberPublicIdAsync(memberPublicId.Value, ct);
         if (result.IsFailure) return NotFound(new { message = result.Error.Message });
 
         var response = MembershipMapper.ToResponseDtos(result.Value);
@@ -82,9 +82,9 @@ public class MembershipController : ControllerBase
 
     //POST
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] MembershipRequestDto dto)
+    public async Task<IActionResult> Create([FromBody] MembershipRequestDto dto, CancellationToken ct)
     {
-        var result = await _service.CreateAsync(dto);
+        var result = await _service.CreateAsync(dto, ct);
         if (result.IsFailure) return BadRequest(result.Error.Message);
         var response = MembershipMapper.ToResponseDto(result.Value);
         return CreatedAtAction(
@@ -96,9 +96,9 @@ public class MembershipController : ControllerBase
 
     //DELETE
     [HttpDelete("{membershipPublicId}/cancel")]
-    public async Task<IActionResult> Cancel([FromRoute] Guid membershipPublicId)
+    public async Task<IActionResult> Cancel([FromRoute] Guid membershipPublicId, CancellationToken ct)
     {
-        var result = await _service.CancelAsync(membershipPublicId);
+        var result = await _service.CancelAsync(membershipPublicId, ct);
         if (result.IsFailure) return NotFound(new { message = result.Error.Message });
         return NoContent();
     }

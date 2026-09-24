@@ -46,7 +46,7 @@ public class RegisterAccessServiceTests
         var dto = new RegisterAccessRequestDto(member.PublicId);
 
         //Act
-        var result = await service.RegisterAsync(dto);
+        var result = await service.RegisterAsync(dto, CancellationToken.None);
 
         //Assert
         result.IsSuccess.Should().BeTrue();
@@ -68,7 +68,7 @@ public class RegisterAccessServiceTests
         var dto = new RegisterAccessRequestDto(inexistentGuid);
 
         //Act
-        var result = await service.RegisterAsync(dto);
+        var result = await service.RegisterAsync(dto, CancellationToken.None);
 
         //Assert
         result.IsFailure.Should().BeTrue();
@@ -94,7 +94,7 @@ public class RegisterAccessServiceTests
         var dto = new RegisterAccessRequestDto(member.PublicId);
 
         //Act
-        var result = await service.RegisterAsync(dto);
+        var result = await service.RegisterAsync(dto, CancellationToken.None);
 
         //Assert
         result.IsSuccess.Should().BeTrue();
@@ -127,7 +127,7 @@ public class RegisterAccessServiceTests
         await context.SaveChangesAsync();
 
         //Act
-        var result = await service.GetByPublicIdAsync(entity.PublicId);
+        var result = await service.GetByPublicIdAsync(entity.PublicId, CancellationToken.None);
 
         //Assert
         result.IsSuccess.Should().BeTrue();
@@ -146,7 +146,7 @@ public class RegisterAccessServiceTests
         var inexistentGuid = Guid.NewGuid();
 
         //Act
-        var result = await service.GetByPublicIdAsync(inexistentGuid);
+        var result = await service.GetByPublicIdAsync(inexistentGuid, CancellationToken.None);
 
         //Assert
         result.IsFailure.Should().BeTrue();
@@ -170,7 +170,7 @@ public class RegisterAccessServiceTests
         await context.SaveChangesAsync();
 
         //Act
-        var result = await service.GetAllAsync();
+        var result = await service.GetAllAsync(CancellationToken.None);
 
         //Assert
         result.IsSuccess.Should().BeTrue();
@@ -185,7 +185,7 @@ public class RegisterAccessServiceTests
         var service = new RegisterAccessService(_logger.Object, context);
 
         //Act
-        var result = await service.GetAllAsync();
+        var result = await service.GetAllAsync(CancellationToken.None);
 
         //Assert
         result.IsSuccess.Should().BeTrue();
@@ -209,7 +209,7 @@ public class RegisterAccessServiceTests
         await context.SaveChangesAsync();
 
         //Act
-        var result = await service.GetByDateAsync(actualDate);
+        var result = await service.GetByDateAsync(actualDate, CancellationToken.None);
 
         //Assert
         result.IsSuccess.Should().BeTrue();
@@ -225,7 +225,7 @@ public class RegisterAccessServiceTests
         var actualDate = DateTime.UtcNow;
 
         //Act
-        var result = await service.GetByDateAsync(actualDate);
+        var result = await service.GetByDateAsync(actualDate, CancellationToken.None);
 
         //Assert
         result.IsSuccess.Should().BeTrue();
@@ -253,7 +253,7 @@ public class RegisterAccessServiceTests
         await context.SaveChangesAsync();
 
         //Act
-        var result = await service.GetByMemberPublicIdAsync(member.PublicId);
+        var result = await service.GetByMemberPublicIdAsync(member.PublicId, CancellationToken.None);
 
         //Assert
         result.IsSuccess.Should().BeTrue();
@@ -271,7 +271,7 @@ public class RegisterAccessServiceTests
         await context.SaveChangesAsync();
 
         //Act
-        var result = await service.GetByMemberPublicIdAsync(member.PublicId);
+        var result = await service.GetByMemberPublicIdAsync(member.PublicId, CancellationToken.None);
 
         //Assert
         result.IsSuccess.Should().BeTrue();
@@ -287,7 +287,7 @@ public class RegisterAccessServiceTests
         var inexistentGuid = Guid.NewGuid();
 
         //Act
-        var result = await service.GetByMemberPublicIdAsync(inexistentGuid);
+        var result = await service.GetByMemberPublicIdAsync(inexistentGuid, CancellationToken.None);
 
         //Assert
         result.IsSuccess.Should().BeTrue();

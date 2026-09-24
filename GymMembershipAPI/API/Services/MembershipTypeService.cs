@@ -22,37 +22,34 @@ public class MembershipTypeService : IMembershipTypeService
         _logger = logger;
     }
 
-    private async Task<bool> ExistsAsync(Guid publicId)
-        => await _context.MembershipTypes.AnyAsync(x => x.PublicId == publicId);
-
-    private async Task<bool> ExistsByNameAsync(string name)
-        => await _context.MembershipTypes.AnyAsync(x => x.Name == name);
+    private async Task<bool> ExistsByNameAsync(string name, CancellationToken ct)
+        => await _context.MembershipTypes.AnyAsync(x => x.Name == name, ct);
 
     // IMembershipType implementation
-    public async Task<Result<MembershipType>> GetByPublicIdAsync(Guid publicId)
+    public async Task<Result<MembershipType>> GetByPublicIdAsync(Guid publicId, CancellationToken ct)
     {
-        var entity = await _context.MembershipTypes.FirstOrDefaultAsync(x => x.PublicId == publicId);
+        var entity = await _context.MembershipTypes.FirstOrDefaultAsync(x => x.PublicId == publicId, ct);
         return entity == null
             ? Result<MembershipType>.Failure(MembershipTypeErrors.NotFound)
             : Result<MembershipType>.Success(entity);
     }
 
-    public async Task<Result<List<MembershipType>>> GetAllAsync()
+    public async Task<Result<List<MembershipType>>> GetAllAsync(CancellationToken ct)
     {
-        var list = await _context.MembershipTypes.ToListAsync();
+        var list = await _context.MembershipTypes.ToListAsync(ct);
         return Result<List<MembershipType>>.Success(list);
     }
 
-    public async Task<Result<MembershipType>> CreateAsync(MembershipTypeRequestDto requestDto)
+    public async Task<Result<MembershipType>> CreateAsync(MembershipTypeRequestDto requestDto, CancellationToken ct)
     {
-        if (await ExistsByNameAsync(requestDto.Name))
+        if (await ExistsByNameAsync(requestDto.Name, ct))
             return Result<MembershipType>.Failure(MembershipTypeErrors.AlreadyExists);
 
         var entity = MembershipTypeMapper.ToEntity(requestDto);
         try
         {
             _context.MembershipTypes.Add(entity);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(ct);
             return Result<MembershipType>.Success(entity);
         }
         catch (Exception e)
@@ -64,13 +61,14 @@ public class MembershipTypeService : IMembershipTypeService
         }
     }
 
-    public async Task<Result<MembershipType>> UpdateAsync(Guid publicId, MembershipTypeRequestDto dto)
+    public async Task<Result<MembershipType>> UpdateAsync(Guid publicId, MembershipTypeRequestDto dto,
+        CancellationToken ct)
     {
         var nameAlreadyExists =
-            await _context.MembershipTypes.AnyAsync(x => x.Name == dto.Name && x.PublicId != publicId);
+            await _context.MembershipTypes.AnyAsync(x => x.Name == dto.Name && x.PublicId != publicId, ct);
         if (nameAlreadyExists) return Result<MembershipType>.Failure(MembershipTypeErrors.AlreadyExists);
 
-        var existingType = await _context.MembershipTypes.FirstOrDefaultAsync(x => x.PublicId == publicId);
+        var existingType = await _context.MembershipTypes.FirstOrDefaultAsync(x => x.PublicId == publicId, ct);
         if (existingType == null) return Result<MembershipType>.Failure(MembershipTypeErrors.NotFound);
 
         try
@@ -78,7 +76,7 @@ public class MembershipTypeService : IMembershipTypeService
             existingType.Name = dto.Name;
             existingType.Price = dto.Price;
             existingType.DurationMonths = dto.DurationMonths;
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(ct);
             return Result<MembershipType>
                 .Success(existingType);
         }
@@ -91,14 +89,14 @@ public class MembershipTypeService : IMembershipTypeService
         }
     }
 
-    public async Task<Result> DeleteAsync(Guid publicId)
+    public async Task<Result> DeleteAsync(Guid publicId, CancellationToken ct)
     {
-        var existingType = _context.MembershipTypes.FirstOrDefault(x => x.PublicId == publicId);
+        var existingType = await _context.MembershipTypes.FirstOrDefaultAsync(x => x.PublicId == publicId, ct);
         if (existingType == null) return Result.Failure(MembershipTypeErrors.NotFound);
         try
         {
             _context.MembershipTypes.Remove(existingType);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(ct);
             return Result.Success();
         }
         catch (Exception e)

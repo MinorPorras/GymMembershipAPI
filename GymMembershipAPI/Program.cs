@@ -78,7 +78,7 @@ builder.Services.AddRateLimiter(options =>
             type = "https://tools.ietf.org/html/rfc7231#section-6.5.10",
             title = "Too Many Requests",
             status = "429",
-            detail = "Has excedido el limite de intentos de incio de sesión, por favor espera un poco",
+            detail = "Has excedido el limite de intentos de inicio de sesión, por favor espera un poco",
             instance = context.HttpContext.Request.Path.Value
         };
 

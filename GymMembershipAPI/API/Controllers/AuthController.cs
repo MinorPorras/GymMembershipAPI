@@ -20,9 +20,9 @@ public class AuthController : ControllerBase
 
     [HttpPost("Login")]
     [EnableRateLimiting("LoginLimit")]
-    public async Task<IActionResult> Login([FromBody] LoginRequestDto dto)
+    public async Task<IActionResult> Login([FromBody] LoginRequestDto dto, CancellationToken ct)
     {
-        var result = await _authService.LoginAsync(dto);
+        var result = await _authService.LoginAsync(dto, ct);
         if (result.IsFailure)
         {
             _logger.LogWarning("Intento de login fallido para el email: {Email}", dto.Email);

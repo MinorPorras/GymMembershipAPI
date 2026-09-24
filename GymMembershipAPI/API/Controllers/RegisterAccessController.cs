@@ -20,54 +20,54 @@ public class RegisterAccessController : ControllerBase
 
 
     [HttpPost]
-    public async Task<IActionResult> Register([FromBody] RegisterAccessRequestDto dto)
+    public async Task<IActionResult> Register([FromBody] RegisterAccessRequestDto dto, CancellationToken ct)
     {
-        var result = await _service.RegisterAsync(dto);
+        var result = await _service.RegisterAsync(dto, ct);
         if (result.IsFailure) return BadRequest(new { message = result.Error.Message });
         var response = RegisterAccessMapper.ToResponseDto(result.Value);
         return Ok(response);
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAll(CancellationToken ct)
     {
-        var result = await _service.GetAllAsync();
+        var result = await _service.GetAllAsync(ct);
         return Ok(RegisterAccessMapper.ToResponseDtos(result.Value));
     }
 
     [HttpGet("{publicId:guid}")]
-    public async Task<IActionResult> GetByPublicId([FromRoute] Guid publicId)
+    public async Task<IActionResult> GetByPublicId([FromRoute] Guid publicId, CancellationToken ct)
     {
-        var result = await _service.GetByPublicIdAsync(publicId);
+        var result = await _service.GetByPublicIdAsync(publicId, ct);
         if (result.IsFailure) return NotFound(new { message = result.Error.Message });
         var response = RegisterAccessMapper.ToResponseDto(result.Value);
         return Ok(response);
     }
 
     [HttpGet("member/{memberPublicId:guid}")]
-    public async Task<IActionResult> GetByMemberPublicId([FromRoute] Guid memberPublicId)
+    public async Task<IActionResult> GetByMemberPublicId([FromRoute] Guid memberPublicId, CancellationToken ct)
     {
-        var result = await _service.GetByMemberPublicIdAsync(memberPublicId);
+        var result = await _service.GetByMemberPublicIdAsync(memberPublicId, ct);
         var response = RegisterAccessMapper.ToResponseDtos(result.Value);
         return Ok(response);
     }
 
     [HttpGet("date/{date:datetime}")]
-    public async Task<IActionResult> GetByDate([FromRoute] DateTime date)
+    public async Task<IActionResult> GetByDate([FromRoute] DateTime date, CancellationToken ct)
     {
-        var result = await _service.GetByDateAsync(date);
+        var result = await _service.GetByDateAsync(date, ct);
         var response = RegisterAccessMapper.ToResponseDtos(result.Value);
         return Ok(response);
     }
 
     [HttpGet("me/registeredAccesses")]
     [Authorize]
-    public async Task<IActionResult> GetMyAccesses()
+    public async Task<IActionResult> GetMyAccesses(CancellationToken ct)
     {
         var memberPublicId = GetMemberPublicIdFromToken();
         if (memberPublicId == null) return Forbid("Solo un miembro puede ver sus propios registros de acceso.");
 
-        var result = await _service.GetByMemberPublicIdAsync(memberPublicId.Value);
+        var result = await _service.GetByMemberPublicIdAsync(memberPublicId.Value, ct);
         var response = RegisterAccessMapper.ToResponseDtos(result.Value);
         return Ok(response);
     }

@@ -29,7 +29,7 @@ public class MembershipTypeServiceTests
         );
 
         //ACT
-        var result = await service.CreateAsync(dto);
+        var result = await service.CreateAsync(dto, CancellationToken.None);
 
         //ASSERT
         result.IsSuccess.Should().BeTrue();
@@ -57,10 +57,10 @@ public class MembershipTypeServiceTests
         var original = new MembershipTypeRequestDto("TestName", 19.99m, 1);
         var duplicateNameDto = new MembershipTypeRequestDto("TestName", 29.99m, 12);
 
-        await service.CreateAsync(original);
+        await service.CreateAsync(original, CancellationToken.None);
 
         //Act
-        var result = await service.CreateAsync(duplicateNameDto);
+        var result = await service.CreateAsync(duplicateNameDto, CancellationToken.None);
 
         //Assert
         result.IsFailure.Should().BeTrue();
@@ -90,10 +90,10 @@ public class MembershipTypeServiceTests
         var addedEntity = new MembershipTypeRequestDto("TestName", 19.99m, 1);
         var updatedEntity = new MembershipTypeRequestDto("NewTestName", 29.99m, 2);
 
-        var createdResult = await service.CreateAsync(addedEntity);
+        var createdResult = await service.CreateAsync(addedEntity, CancellationToken.None);
 
         //Act
-        var result = await service.UpdateAsync(createdResult.Value.PublicId, updatedEntity);
+        var result = await service.UpdateAsync(createdResult.Value.PublicId, updatedEntity, CancellationToken.None);
 
         //Assert
         result.IsSuccess.Should().BeTrue();
@@ -116,11 +116,11 @@ public class MembershipTypeServiceTests
         var mainEntity = new MembershipTypeRequestDto("TestName", 19.99m, 1);
         var addedEntity2 = new MembershipTypeRequestDto("TestName2", 29.99m, 1);
         var updatedEntity = new MembershipTypeRequestDto("TestName2", 29.99m, 2);
-        var createdResult = await service.CreateAsync(mainEntity);
-        await service.CreateAsync(addedEntity2);
+        var createdResult = await service.CreateAsync(mainEntity, CancellationToken.None);
+        await service.CreateAsync(addedEntity2, CancellationToken.None);
 
         //Act 
-        var result = await service.UpdateAsync(createdResult.Value.PublicId, updatedEntity);
+        var result = await service.UpdateAsync(createdResult.Value.PublicId, updatedEntity, CancellationToken.None);
 
         //Assert
         result.IsFailure.Should().BeTrue();
@@ -144,7 +144,7 @@ public class MembershipTypeServiceTests
         var updateDto = new MembershipTypeRequestDto("TestName", 19.99m, 1);
 
         //Act
-        var result = await service.UpdateAsync(nonExistentId, updateDto);
+        var result = await service.UpdateAsync(nonExistentId, updateDto, CancellationToken.None);
 
         //Assert
         result.IsFailure.Should().BeTrue();
@@ -164,11 +164,11 @@ public class MembershipTypeServiceTests
         var service = new MembershipTypeService(context, _loggerMock.Object);
         var dto1 = new MembershipTypeRequestDto("TestName", 19.99m, 1);
         var dto2 = new MembershipTypeRequestDto("TestName2", 29.99m, 2);
-        await service.CreateAsync(dto1);
-        await service.CreateAsync(dto2);
+        await service.CreateAsync(dto1, CancellationToken.None);
+        await service.CreateAsync(dto2, CancellationToken.None);
 
         //Act
-        var result = await service.GetAllAsync();
+        var result = await service.GetAllAsync(CancellationToken.None);
 
         //Assert
         result.IsSuccess.Should().BeTrue();
@@ -189,7 +189,7 @@ public class MembershipTypeServiceTests
         var service = new MembershipTypeService(context, _loggerMock.Object);
 
         //Act
-        var result = await service.GetAllAsync();
+        var result = await service.GetAllAsync(CancellationToken.None);
 
         //Assert
         result.IsSuccess.Should().BeTrue();
@@ -203,10 +203,10 @@ public class MembershipTypeServiceTests
         await using var context = TestDbContextFactory.Create();
         var service = new MembershipTypeService(context, _loggerMock.Object);
         var data = new MembershipTypeRequestDto("TestName", 19.99m, 1);
-        var createdData = await service.CreateAsync(data);
+        var createdData = await service.CreateAsync(data, CancellationToken.None);
 
         //Act
-        var result = await service.GetByPublicIdAsync(createdData.Value.PublicId);
+        var result = await service.GetByPublicIdAsync(createdData.Value.PublicId, CancellationToken.None);
 
         //Assert
         result.IsSuccess.Should().BeTrue();
@@ -222,7 +222,7 @@ public class MembershipTypeServiceTests
         var inexistentId = Guid.NewGuid();
 
         //Act
-        var result = await service.GetByPublicIdAsync(inexistentId);
+        var result = await service.GetByPublicIdAsync(inexistentId, CancellationToken.None);
 
         //Assert
         result.IsFailure.Should().BeTrue();
@@ -241,10 +241,10 @@ public class MembershipTypeServiceTests
         await using var context = TestDbContextFactory.Create();
         var service = new MembershipTypeService(context, _loggerMock.Object);
         var data = new MembershipTypeRequestDto("TestName", 19.99m, 1);
-        var createdData = await service.CreateAsync(data);
+        var createdData = await service.CreateAsync(data, CancellationToken.None);
 
         //Act
-        var result = await service.DeleteAsync(createdData.Value.PublicId);
+        var result = await service.DeleteAsync(createdData.Value.PublicId, CancellationToken.None);
 
         //Assert
         result.IsSuccess.Should().BeTrue();
@@ -260,11 +260,11 @@ public class MembershipTypeServiceTests
         await using var context = TestDbContextFactory.Create();
         var service = new MembershipTypeService(context, _loggerMock.Object);
         var data = new MembershipTypeRequestDto("TestName", 19.99m, 1);
-        var createdData = await service.CreateAsync(data);
+        var createdData = await service.CreateAsync(data, CancellationToken.None);
         var nonExistentId = Guid.NewGuid();
 
         //Act
-        var result = await service.DeleteAsync(nonExistentId);
+        var result = await service.DeleteAsync(nonExistentId, CancellationToken.None);
 
         //Assert
         result.IsFailure.Should().BeTrue();

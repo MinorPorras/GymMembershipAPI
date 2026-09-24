@@ -50,7 +50,7 @@ public class BookingServiceTests
         await context.SaveChangesAsync();
 
         //Act
-        var result = await service.GetByPublicIdAsync(existingBooking.PublicId);
+        var result = await service.GetByPublicIdAsync(existingBooking.PublicId, CancellationToken.None);
 
         //Assert
         result.IsSuccess.Should().BeTrue();
@@ -67,7 +67,7 @@ public class BookingServiceTests
         var inexistentGuid = Guid.NewGuid();
 
         //Act
-        var result = await service.GetByPublicIdAsync(inexistentGuid);
+        var result = await service.GetByPublicIdAsync(inexistentGuid, CancellationToken.None);
 
         //Assert
         result.IsFailure.Should().BeTrue();
@@ -112,7 +112,7 @@ public class BookingServiceTests
         await context.SaveChangesAsync();
 
         //Act
-        var result = await service.GetAllAsync();
+        var result = await service.GetAllAsync(CancellationToken.None);
 
         //Assert
         result.IsSuccess.Should().BeTrue();
@@ -128,7 +128,7 @@ public class BookingServiceTests
         var service = new BookingService(_logger.Object, context);
 
         //Act
-        var result = await service.GetAllAsync();
+        var result = await service.GetAllAsync(CancellationToken.None);
 
         //Assert
         result.IsSuccess.Should().BeTrue();
@@ -176,7 +176,7 @@ public class BookingServiceTests
         await context.SaveChangesAsync();
 
         //Act
-        var result = await service.GetByMemberPublicIdAsync(member1.PublicId);
+        var result = await service.GetByMemberPublicIdAsync(member1.PublicId, CancellationToken.None);
 
         //Assert
         result.IsSuccess.Should().BeTrue();
@@ -218,7 +218,7 @@ public class BookingServiceTests
         var inexistentGuid = Guid.NewGuid();
 
         //Act
-        var result = await service.GetByMemberPublicIdAsync(inexistentGuid);
+        var result = await service.GetByMemberPublicIdAsync(inexistentGuid, CancellationToken.None);
 
         //Assert
         result.IsSuccess.Should().BeTrue();
@@ -266,7 +266,7 @@ public class BookingServiceTests
         await context.SaveChangesAsync();
 
         //Act
-        var result = await service.GetByClassPublicIdAsync(groupClass.PublicId);
+        var result = await service.GetByClassPublicIdAsync(groupClass.PublicId, CancellationToken.None);
 
         //Assert
         result.IsSuccess.Should().BeTrue();
@@ -308,7 +308,7 @@ public class BookingServiceTests
         var inexistentGuid = Guid.NewGuid();
 
         //Act
-        var result = await service.GetByClassPublicIdAsync(inexistentGuid);
+        var result = await service.GetByClassPublicIdAsync(inexistentGuid, CancellationToken.None);
 
         //Assert
         result.IsSuccess.Should().BeTrue();
@@ -356,7 +356,7 @@ public class BookingServiceTests
         var dto = new BookingRequestDto(member.PublicId, groupClass.PublicId);
 
         //Act 
-        var result = await service.CreateAsync(dto);
+        var result = await service.CreateAsync(dto, CancellationToken.None);
 
         //Assert
         result.IsSuccess.Should().BeTrue();
@@ -378,7 +378,7 @@ public class BookingServiceTests
 
         var dto = new BookingRequestDto(inexistentMemberPublicId, inexistentClassPublicId);
         //Act
-        var result = await service.CreateAsync(dto);
+        var result = await service.CreateAsync(dto, CancellationToken.None);
 
         //Assert
         result.IsFailure.Should().BeTrue();
@@ -401,7 +401,7 @@ public class BookingServiceTests
         var dto = new BookingRequestDto(member.PublicId, inexistentClassPublicId);
 
         //Act
-        var result = await service.CreateAsync(dto);
+        var result = await service.CreateAsync(dto, CancellationToken.None);
 
         //Assert
         result.IsFailure.Should().BeTrue();
@@ -437,7 +437,7 @@ public class BookingServiceTests
         var dto = new BookingRequestDto(member.PublicId, inexistentClassPublicId);
 
         //Act
-        var result = await service.CreateAsync(dto);
+        var result = await service.CreateAsync(dto, CancellationToken.None);
 
         //Assert
         result.IsFailure.Should().BeTrue();
@@ -472,7 +472,7 @@ public class BookingServiceTests
         var dto = new BookingRequestDto(member.PublicId, inexistentClassPublicId);
 
         //Act
-        var result = await service.CreateAsync(dto);
+        var result = await service.CreateAsync(dto, CancellationToken.None);
 
         //Assert
         result.IsFailure.Should().BeTrue();
@@ -527,7 +527,7 @@ public class BookingServiceTests
         var dto = new BookingRequestDto(member2.PublicId, groupClass.PublicId);
 
         //Act
-        var result = await service.CreateAsync(dto);
+        var result = await service.CreateAsync(dto, CancellationToken.None);
 
         //Assert
         result.IsFailure.Should().BeTrue();
@@ -585,7 +585,7 @@ public class BookingServiceTests
         var dto = new BookingRequestDto(member.PublicId, groupClass.PublicId);
 
         //Act
-        var result = await service.CreateAsync(dto);
+        var result = await service.CreateAsync(dto, CancellationToken.None);
 
         //Assert
         result.IsFailure.Should().BeTrue();
@@ -650,7 +650,7 @@ public class BookingServiceTests
         var dto = new BookingRequestDto(member.PublicId, groupClass.PublicId);
 
         // Act
-        var result = await service.CreateAsync(dto);
+        var result = await service.CreateAsync(dto, CancellationToken.None);
 
         // Assert
         result.IsFailure.Should().BeTrue();
@@ -717,7 +717,7 @@ public class BookingServiceTests
         await context.SaveChangesAsync();
 
         //Act
-        var result = await service.CancelAsync(existingBooking.PublicId);
+        var result = await service.CancelAsync(existingBooking.PublicId, CancellationToken.None);
 
         //Assert
         result.IsSuccess.Should().BeTrue();
@@ -726,7 +726,7 @@ public class BookingServiceTests
         canceledBooking.Should().NotBeNull();
         canceledBooking.MemberId.Should().Be(member.Id);
         canceledBooking.GroupClassId.Should().Be(groupClass.Id);
-        canceledBooking.State.Should().Be("Cancelled");
+        canceledBooking.State.Should().Be("Cancelada");
     }
 
     [Fact]
@@ -737,7 +737,7 @@ public class BookingServiceTests
         var inexistentPublicId = Guid.NewGuid();
 
         //Act
-        var result = await service.CancelAsync(inexistentPublicId);
+        var result = await service.CancelAsync(inexistentPublicId, CancellationToken.None);
 
         //Assert
         result.IsFailure.Should().BeTrue();
@@ -782,13 +782,13 @@ public class BookingServiceTests
             MemberId = member.Id,
             GroupClassId = groupClass.Id,
             CreatedAt = DateTime.UtcNow.AddDays(-3),
-            State = "Cancelled"
+            State = "Cancelada"
         };
         context.Bookings.Add(existingBooking);
         await context.SaveChangesAsync();
 
         //Act
-        var result = await service.CancelAsync(existingBooking.PublicId);
+        var result = await service.CancelAsync(existingBooking.PublicId, CancellationToken.None);
 
         //Assert
         result.IsFailure.Should().BeTrue();

@@ -19,19 +19,19 @@ public class UserService : IUserService
         _logger = logger;
     }
 
-    public async Task<Result<User>> GetByPublicIdAsync(Guid publicId)
+    public async Task<Result<User>> GetByPublicIdAsync(Guid publicId, CancellationToken ct)
     {
         var user = await _context.Users
             .Include(u => u.Member)
-            .FirstOrDefaultAsync(u => u.PublicId == publicId);
+            .FirstOrDefaultAsync(u => u.PublicId == publicId, ct);
         return user == null
             ? Result<User>.Failure(AuthErrors.UserNotFound)
             : Result<User>.Success(user);
     }
 
-    public async Task<Result<User>> CreateAsync(UserCreateRequestDto dto)
+    public async Task<Result<User>> CreateAsync(UserCreateRequestDto dto, CancellationToken ct)
     {
-        var emailExists = await _context.Users.AnyAsync(u => u.Email == dto.Email);
+        var emailExists = await _context.Users.AnyAsync(u => u.Email == dto.Email, ct);
         if (emailExists) return Result<User>.Failure(AuthErrors.UserAlreadyExists);
 
         if (!Enum.TryParse<UserRole>(dto.Role, ignoreCase: true, out var parsedRole))
@@ -43,7 +43,7 @@ public class UserService : IUserService
         if (dto.MemberPublicId.HasValue)
         {
             var member = await _context.Members
-                .FirstOrDefaultAsync(m => m.PublicId == dto.MemberPublicId);
+                .FirstOrDefaultAsync(m => m.PublicId == dto.MemberPublicId, ct);
 
             if (member == null)
                 return Result<User>.Failure(MemberErrors.NotFound);
@@ -58,7 +58,7 @@ public class UserService : IUserService
             : User.CreateStaffUser(dto.Email, passwordHash, parsedRole);
 
         _context.Users.Add(user);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(ct);
         return Result<User>.Success(user);
     }
 }

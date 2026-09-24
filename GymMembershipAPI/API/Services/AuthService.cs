@@ -25,11 +25,11 @@ public class AuthService : IAuthService
         _configuration = configuration;
     }
 
-    public async Task<Result<LoginResponseDto>> LoginAsync(LoginRequestDto dto)
+    public async Task<Result<LoginResponseDto>> LoginAsync(LoginRequestDto dto, CancellationToken ct)
     {
         var user = await _context.Users
             .Include(u => u.Member)
-            .FirstOrDefaultAsync(u => u.Email == dto.Email);
+            .FirstOrDefaultAsync(u => u.Email == dto.Email, cancellationToken: ct);
 
         if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
             return Result<LoginResponseDto>.Failure(AuthErrors.InvalidCredentials);

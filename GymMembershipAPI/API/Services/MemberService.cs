@@ -19,28 +19,28 @@ public class MemberService : IMemberService
         _logger = logger;
     }
 
-    public async Task<Result<Member>> GetByPublicIdAsync(Guid publicId)
+    public async Task<Result<Member>> GetByPublicIdAsync(Guid publicId, CancellationToken ct)
     {
-        var entity = await _context.Members.FirstOrDefaultAsync(x => x.PublicId == publicId);
+        var entity = await _context.Members.FirstOrDefaultAsync(x => x.PublicId == publicId, ct);
         return entity == null
             ? Result<Member>.Failure(MemberErrors.NotFound)
             : Result<Member>.Success(entity);
     }
 
-    public async Task<Result<List<Member>>> GetAllAsync()
+    public async Task<Result<List<Member>>> GetAllAsync(CancellationToken ct)
     {
-        var list = await _context.Members.ToListAsync();
+        var list = await _context.Members.ToListAsync(ct);
         return Result<List<Member>>.Success(list);
     }
 
-    public async Task<Result> DeleteAsync(Guid publicId)
+    public async Task<Result> DeleteAsync(Guid publicId, CancellationToken ct)
     {
-        var entity = await _context.Members.FirstOrDefaultAsync(x => x.PublicId == publicId);
+        var entity = await _context.Members.FirstOrDefaultAsync(x => x.PublicId == publicId, ct);
         if (entity == null) return Result.Failure(MemberErrors.NotFound);
         try
         {
             _context.Members.Remove(entity);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(ct);
             return Result.Success();
         }
         catch (Exception e)
@@ -50,17 +50,17 @@ public class MemberService : IMemberService
         }
     }
 
-    public async Task<Result<Member>> CreateAsync(MemberCreateDto dto)
+    public async Task<Result<Member>> CreateAsync(MemberCreateDto dto, CancellationToken ct)
     {
         var membershipType = await _context.MembershipTypes
-            .FirstOrDefaultAsync(t => t.PublicId == dto.MembershipTypePublicId);
+            .FirstOrDefaultAsync(t => t.PublicId == dto.MembershipTypePublicId, ct);
 
         if (membershipType == null)
             return Result<Member>.Failure(MembershipTypeErrors.NotFound);
 
         // Validar email duplicado
         var emailExists = await _context.Members
-            .AnyAsync(x => x.Email == dto.Email);
+            .AnyAsync(x => x.Email == dto.Email, ct);
 
         if (emailExists)
             return Result<Member>.Failure(MemberErrors.EmailAlreadyExists);
@@ -79,7 +79,7 @@ public class MemberService : IMemberService
         try
         {
             _context.Members.Add(entity);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(ct);
             return Result<Member>.Success(entity);
         }
         catch (Exception e)
@@ -89,22 +89,22 @@ public class MemberService : IMemberService
         }
     }
 
-    public async Task<Result<Member>> UpdateAsync(Guid publicId, MemberUpdateDto dto)
+    public async Task<Result<Member>> UpdateAsync(Guid publicId, MemberUpdateDto dto, CancellationToken ct)
     {
         var emailExists = await _context.Members
-            .AnyAsync(x => x.Email == dto.Email && x.PublicId != publicId);
+            .AnyAsync(x => x.Email == dto.Email && x.PublicId != publicId, ct);
         if (emailExists) return Result<Member>.Failure(MemberErrors.EmailAlreadyExists);
 
-        var entity = await _context.Members.FirstOrDefaultAsync(x => x.PublicId == publicId);
+        var entity = await _context.Members.FirstOrDefaultAsync(x => x.PublicId == publicId, ct);
         if (entity == null) return Result<Member>.Failure(MemberErrors.NotFound);
 
         try
         {
             entity.Name = dto.Name;
             entity.Email = dto.Email;
-            entity.Phone = dto.Phone;
+            entity.Phone = dto.Phone ?? "";
 
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(ct);
             return Result<Member>.Success(entity);
         }
         catch (Exception e)

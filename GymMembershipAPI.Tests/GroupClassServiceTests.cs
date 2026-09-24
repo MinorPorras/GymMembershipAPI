@@ -32,7 +32,7 @@ public class GroupClassServiceTests
         await context.SaveChangesAsync();
 
         //Act
-        var result = await service.GetByPublicIdAsync(groupClass.PublicId);
+        var result = await service.GetByPublicIdAsync(groupClass.PublicId, CancellationToken.None);
 
         //Assert
         result.IsSuccess.Should().BeTrue();
@@ -48,7 +48,7 @@ public class GroupClassServiceTests
         var inexistentGuid = Guid.NewGuid();
 
         //Act
-        var result = await service.GetByPublicIdAsync(inexistentGuid);
+        var result = await service.GetByPublicIdAsync(inexistentGuid, CancellationToken.None);
 
         //Assert
         result.IsFailure.Should().BeTrue();
@@ -73,7 +73,7 @@ public class GroupClassServiceTests
         await context.SaveChangesAsync();
 
         //Act
-        var result = await service.GetAllAsync();
+        var result = await service.GetAllAsync(CancellationToken.None);
 
         //Assert
         result.IsSuccess.Should().BeTrue();
@@ -89,7 +89,7 @@ public class GroupClassServiceTests
         var service = new GroupClassService(_logger.Object, context);
 
         //Act
-        var result = await service.GetAllAsync();
+        var result = await service.GetAllAsync(CancellationToken.None);
 
         //Assert
         result.IsSuccess.Should().BeTrue();
@@ -124,7 +124,7 @@ public class GroupClassServiceTests
         await context.SaveChangesAsync();
 
         //Act
-        var result = await service.GetByDateAsync(searchedDate);
+        var result = await service.GetByDateAsync(searchedDate, CancellationToken.None);
 
         //Assert
         result.IsSuccess.Should().BeTrue();
@@ -145,7 +145,7 @@ public class GroupClassServiceTests
         var dto = new GroupClassRequestDto("test", "testInstructor", DateTime.UtcNow.AddDays(3), 1);
 
         //Act
-        var result = await service.CreateAsync(dto);
+        var result = await service.CreateAsync(dto, CancellationToken.None);
 
         //Assert
         result.IsSuccess.Should().BeTrue();
@@ -176,7 +176,7 @@ public class GroupClassServiceTests
         var dto = new GroupClassRequestDto(duplicatedName, "testInstructor", DateTime.UtcNow.AddDays(3), 1);
 
         //Act
-        var result = await service.CreateAsync(dto);
+        var result = await service.CreateAsync(dto, CancellationToken.None);
 
         //Assert
         result.IsFailure.Should().BeTrue();
@@ -195,7 +195,7 @@ public class GroupClassServiceTests
         var dto = new GroupClassRequestDto("test", "testInstructor", DateTime.UtcNow.AddDays(-1), 1);
 
         //Act
-        var result = await service.CreateAsync(dto);
+        var result = await service.CreateAsync(dto, CancellationToken.None);
 
         //Assert
         result.IsFailure.Should().BeTrue();
@@ -226,7 +226,7 @@ public class GroupClassServiceTests
         var dto = new GroupClassRequestDto("test", "testInstructor", DateTime.UtcNow.AddDays(3), 1);
 
         //Act
-        var result = await service.UpdateAsync(originalClass.PublicId, dto);
+        var result = await service.UpdateAsync(originalClass.PublicId, dto, CancellationToken.None);
 
         //Assert
         result.IsSuccess.Should().BeTrue();
@@ -247,7 +247,7 @@ public class GroupClassServiceTests
         var dto = new GroupClassRequestDto("test", "testInstructor", DateTime.UtcNow.AddDays(3), 1);
 
         //Act
-        var result = await service.UpdateAsync(inexistentPublicId, dto);
+        var result = await service.UpdateAsync(inexistentPublicId, dto, CancellationToken.None);
 
         //Assert
         result.IsFailure.Should().BeTrue();
@@ -276,7 +276,7 @@ public class GroupClassServiceTests
         await context.SaveChangesAsync();
 
         //Act
-        var result = await service.DeleteAsync(originalClass.PublicId);
+        var result = await service.DeleteAsync(originalClass.PublicId, CancellationToken.None);
 
         //Assert
         result.IsSuccess.Should().BeTrue();
@@ -304,7 +304,7 @@ public class GroupClassServiceTests
         var inexistentPublicId = Guid.NewGuid();
 
         //Act
-        var result = await service.DeleteAsync(inexistentPublicId);
+        var result = await service.DeleteAsync(inexistentPublicId, CancellationToken.None);
 
         //Assert
         result.IsFailure.Should().BeTrue();

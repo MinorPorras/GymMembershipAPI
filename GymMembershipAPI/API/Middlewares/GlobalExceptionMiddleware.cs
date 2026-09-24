@@ -27,13 +27,13 @@ public class GlobalExceptionMiddleware
             context.Response.ContentType = "application/json";
             context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
 
-            //Crear objeto estandar (RFC 7807) con detail genérico para prod
+            //Crear objeto estandar (RFC 7807) con detail genérico para producción
             var problemDetails = new
             {
                 type = "https://tools.ietf.org/html/rfc7231#section-6.6.1",
                 title = "Internal Server Error",
                 statusCode = 500,
-                detail = "Ocurrió un error inesperado en el servido. Por favor espera y vuelve a intentarlo",
+                detail = "Ocurrió un error inesperado en el servidor. Por favor espera y vuelve a intentarlo",
                 instance = context.Request.Path.Value
             };
 

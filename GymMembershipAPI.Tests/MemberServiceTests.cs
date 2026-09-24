@@ -28,7 +28,7 @@ public class MemberServiceTests
         await context.SaveChangesAsync();
 
         //Act
-        var result = await service.GetAllAsync();
+        var result = await service.GetAllAsync(CancellationToken.None);
 
         //Assert
         result.IsSuccess.Should().BeTrue();
@@ -48,7 +48,7 @@ public class MemberServiceTests
 
 
         //Act
-        var result = await service.GetAllAsync();
+        var result = await service.GetAllAsync(CancellationToken.None);
 
         //Assert
         result.IsSuccess.Should().BeTrue();
@@ -67,7 +67,7 @@ public class MemberServiceTests
         await context.SaveChangesAsync();
 
         //Act
-        var result = await service.GetByPublicIdAsync(member.PublicId);
+        var result = await service.GetByPublicIdAsync(member.PublicId, CancellationToken.None);
 
         //Assert
         result.IsSuccess.Should().BeTrue();
@@ -87,7 +87,7 @@ public class MemberServiceTests
         var inexistentGuid = Guid.NewGuid();
 
         //Act
-        var result = await service.GetByPublicIdAsync(inexistentGuid);
+        var result = await service.GetByPublicIdAsync(inexistentGuid, CancellationToken.None);
 
         //Assert
         result.IsFailure.Should().BeTrue();
@@ -112,7 +112,7 @@ public class MemberServiceTests
         var dto = new MemberCreateDto("testName", "testEmail@gmail.com", "testPhone", type.PublicId);
 
         //Act
-        var result = await service.CreateAsync(dto);
+        var result = await service.CreateAsync(dto, CancellationToken.None);
 
         //Assert
         result.IsSuccess.Should().BeTrue();
@@ -149,7 +149,7 @@ public class MemberServiceTests
         var dto = new MemberCreateDto("newName", repeatedMail, "1111-1111", type.PublicId);
 
         //Act
-        var result = await service.CreateAsync(dto);
+        var result = await service.CreateAsync(dto, CancellationToken.None);
 
         //Assert
         result.IsFailure.Should().BeTrue();
@@ -167,7 +167,7 @@ public class MemberServiceTests
         var dto = new MemberCreateDto("testName", "test@gmail.com", "testPhone", inexistentGuid);
 
         //Act
-        var result = await service.CreateAsync(dto);
+        var result = await service.CreateAsync(dto, CancellationToken.None);
 
         //Assert
         result.IsFailure.Should().BeTrue();
@@ -192,7 +192,7 @@ public class MemberServiceTests
         var updatedMember = new MemberUpdateDto("test2", "test2@gmail.com", "1212-1212");
 
         //Act
-        var result = await service.UpdateAsync(existentMember.PublicId, updatedMember);
+        var result = await service.UpdateAsync(existentMember.PublicId, updatedMember, CancellationToken.None);
 
         //Assert
         result.IsSuccess.Should().BeTrue();
@@ -218,7 +218,7 @@ public class MemberServiceTests
         var updatedMember = new MemberUpdateDto("test2", "test2@gmail.com", "1212-1212");
         
         //Act
-        var result = await service.UpdateAsync(existentMember.PublicId, updatedMember);
+        var result = await service.UpdateAsync(existentMember.PublicId, updatedMember, CancellationToken.None);
         
         //Assert
         result.IsFailure.Should().BeTrue();
@@ -236,7 +236,7 @@ public class MemberServiceTests
         var updatedMember = new MemberUpdateDto("test", "test@gmail.com", "1111-1111");
         
         //Act
-        var result = await service.UpdateAsync(existentGuid, updatedMember);
+        var result = await service.UpdateAsync(existentGuid, updatedMember, CancellationToken.None);
         
         //Assert
         result.IsFailure.Should().BeTrue();
@@ -260,7 +260,7 @@ public class MemberServiceTests
         await context.SaveChangesAsync();
         
         //Act
-        var result = await service.DeleteAsync(member.PublicId);
+        var result = await service.DeleteAsync(member.PublicId, CancellationToken.None);
         
         //Assert
         result.IsSuccess.Should().BeTrue();
@@ -281,7 +281,7 @@ public class MemberServiceTests
         var invalidGuid = Guid.NewGuid();
         
         //Act
-        var result = await service.DeleteAsync(invalidGuid);
+        var result = await service.DeleteAsync(invalidGuid, CancellationToken.None);
         
         //Assert
         result.IsFailure.Should().BeTrue();

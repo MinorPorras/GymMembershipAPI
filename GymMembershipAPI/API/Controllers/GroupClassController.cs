@@ -22,9 +22,9 @@ public class GroupClassController : ControllerBase
     // GET
     [HttpGet]
     [AllowAnonymous]
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAll(CancellationToken ct)
     {
-        var result = await _service.GetAllAsync();
+        var result = await _service.GetAllAsync(ct);
         if (result.IsFailure) return NotFound(result.Error.Message);
         var response = GroupClassMapper.ToDtos(result.Value);
         return Ok(response);
@@ -32,9 +32,9 @@ public class GroupClassController : ControllerBase
 
     [HttpGet("{PublicId:guid}")]
     [AllowAnonymous]
-    public async Task<IActionResult> GetByPublicId([FromRoute] Guid publicId)
+    public async Task<IActionResult> GetByPublicId([FromRoute] Guid publicId, CancellationToken ct)
     {
-        var result = await _service.GetByPublicIdAsync(publicId);
+        var result = await _service.GetByPublicIdAsync(publicId, ct);
         if (result.IsFailure) return StatusCode(500, result.Error.Message);
         var response = GroupClassMapper.ToDto(result.Value);
         return Ok(response);
@@ -42,9 +42,9 @@ public class GroupClassController : ControllerBase
 
     [HttpGet("date/{date:datetime}")]
     [AllowAnonymous]
-    public async Task<IActionResult> GetByDate([FromRoute] DateTime date)
+    public async Task<IActionResult> GetByDate([FromRoute] DateTime date, CancellationToken ct)
     {
-        var result = await _service.GetByDateAsync(date);
+        var result = await _service.GetByDateAsync(date, ct);
         if (result.IsFailure) return NotFound(result.Error.Message);
         var response = GroupClassMapper.ToDtos(result.Value);
         return Ok(response);
@@ -53,9 +53,9 @@ public class GroupClassController : ControllerBase
     //POST
     [HttpPost]
     [Authorize(Roles = "Admin, Staff")]
-    public async Task<IActionResult> Create([FromBody] GroupClassRequestDto dto)
+    public async Task<IActionResult> Create([FromBody] GroupClassRequestDto dto, CancellationToken ct)
     {
-        var result = await _service.CreateAsync(dto);
+        var result = await _service.CreateAsync(dto, ct);
         if (result.IsFailure)
         {
             if (result.Error == GroupClassErrors.NameAlreadyExists) return Conflict(result.Error.Message);
@@ -69,9 +69,9 @@ public class GroupClassController : ControllerBase
     //PUT
     [HttpPut("{publicId:guid}")]
     [Authorize(Roles = "Admin, Staff")]
-    public async Task<IActionResult> Update([FromRoute] Guid publicId, [FromBody] GroupClassRequestDto dto)
+    public async Task<IActionResult> Update([FromRoute] Guid publicId, [FromBody] GroupClassRequestDto dto, CancellationToken ct)
     {
-        var result = await _service.UpdateAsync(publicId, dto);
+        var result = await _service.UpdateAsync(publicId, dto, ct);
         if (result.IsFailure)
         {
             if (result.Error == GroupClassErrors.NameAlreadyExists) return Conflict(result.Error.Message);
@@ -85,9 +85,9 @@ public class GroupClassController : ControllerBase
     //DELETE
     [HttpDelete("{publicId:guid}")]
     [Authorize(Roles = "Admin, Staff")]
-    public async Task<IActionResult> Delete([FromRoute] Guid publicId)
+    public async Task<IActionResult> Delete([FromRoute] Guid publicId, CancellationToken ct)
     {
-        var result = await _service.DeleteAsync(publicId);
+        var result = await _service.DeleteAsync(publicId, ct);
         if (result.IsFailure) return NotFound(result.Error.Message);
         return NoContent();
     }

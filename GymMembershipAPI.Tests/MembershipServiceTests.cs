@@ -38,7 +38,7 @@ public class MembershipServiceTests
         await context.SaveChangesAsync();
 
         //Act
-        var result = await service.GetByPublicIdAsync(membership.PublicId);
+        var result = await service.GetByPublicIdAsync(membership.PublicId, CancellationToken.None);
 
         //Assert
         result.IsSuccess.Should().BeTrue();
@@ -62,7 +62,7 @@ public class MembershipServiceTests
         var inexistentGuid = Guid.NewGuid();
 
         //Act
-        var result = await service.GetByPublicIdAsync(inexistentGuid);
+        var result = await service.GetByPublicIdAsync(inexistentGuid, CancellationToken.None);
 
         //Assert
         result.IsFailure.Should().BeTrue();
@@ -94,7 +94,7 @@ public class MembershipServiceTests
         await context.SaveChangesAsync();
 
         //Act
-        var result = await service.GetActiveByMemberPublicId(member.PublicId);
+        var result = await service.GetActiveByMemberPublicId(member.PublicId, CancellationToken.None);
 
         //Assert
         result.IsSuccess.Should().BeTrue();
@@ -115,7 +115,7 @@ public class MembershipServiceTests
         var inexistentGuid = Guid.NewGuid();
 
         //Act
-        var result = await service.GetActiveByMemberPublicId(inexistentGuid);
+        var result = await service.GetActiveByMemberPublicId(inexistentGuid, CancellationToken.None);
 
         //Assert
         result.IsSuccess.Should().BeTrue();
@@ -133,7 +133,7 @@ public class MembershipServiceTests
         await context.SaveChangesAsync();
 
         //Act
-        var result = await service.GetActiveByMemberPublicId(member.PublicId);
+        var result = await service.GetActiveByMemberPublicId(member.PublicId, CancellationToken.None);
 
         //Assert
         result.IsSuccess.Should().BeTrue();
@@ -164,7 +164,7 @@ public class MembershipServiceTests
         await context.SaveChangesAsync();
 
         //Act
-        var result = await service.GetHistoryByMemberPublicIdAsync(member.PublicId);
+        var result = await service.GetHistoryByMemberPublicIdAsync(member.PublicId, CancellationToken.None);
 
         //Assert
         result.IsSuccess.Should().BeTrue();
@@ -184,7 +184,7 @@ public class MembershipServiceTests
         var inexistentGuid = Guid.NewGuid();
 
         //Act
-        var result = await service.GetHistoryByMemberPublicIdAsync(inexistentGuid);
+        var result = await service.GetHistoryByMemberPublicIdAsync(inexistentGuid, CancellationToken.None);
 
         //Assert
         result.IsSuccess.Should().BeTrue();
@@ -202,7 +202,7 @@ public class MembershipServiceTests
         await context.SaveChangesAsync();
 
         //Act
-        var result = await service.GetHistoryByMemberPublicIdAsync(member.PublicId);
+        var result = await service.GetHistoryByMemberPublicIdAsync(member.PublicId, CancellationToken.None);
 
         //Assert
         result.IsSuccess.Should().BeTrue();
@@ -242,7 +242,7 @@ public class MembershipServiceTests
         var dto = new MembershipRequestDto(member.PublicId, newType.PublicId);
 
         //Act
-        var result = await service.CreateAsync(dto);
+        var result = await service.CreateAsync(dto, CancellationToken.None);
 
         //Assert
         result.IsSuccess.Should().BeTrue();
@@ -273,7 +273,7 @@ public class MembershipServiceTests
         var dto = new MembershipRequestDto(inexistentGuid, inexistentGuid);
 
         //Act
-        var result = await service.CreateAsync(dto);
+        var result = await service.CreateAsync(dto, CancellationToken.None);
 
         //Assert
         result.IsFailure.Should().BeTrue();
@@ -293,7 +293,7 @@ public class MembershipServiceTests
         var dto = new MembershipRequestDto(member.PublicId, inexistentGuid);
 
         //Act
-        var result = await service.CreateAsync(dto);
+        var result = await service.CreateAsync(dto, CancellationToken.None);
 
         //Assert
         result.IsFailure.Should().BeTrue();
@@ -330,7 +330,7 @@ public class MembershipServiceTests
         await context.SaveChangesAsync();
 
         //Act
-        var result = await service.CancelAsync(existentMembership.PublicId);
+        var result = await service.CancelAsync(existentMembership.PublicId, CancellationToken.None);
 
         //Assert
         result.IsSuccess.Should().BeTrue();
@@ -349,7 +349,7 @@ public class MembershipServiceTests
         var inexistentGuid = Guid.NewGuid();
 
         //Act
-        var result = await service.CancelAsync(inexistentGuid);
+        var result = await service.CancelAsync(inexistentGuid, CancellationToken.None);
 
         //Assert
         result.IsFailure.Should().BeTrue();
@@ -383,7 +383,7 @@ public class MembershipServiceTests
         await context.SaveChangesAsync();
 
         //Act
-        var result = await service.CancelAsync(existentMembership.PublicId);
+        var result = await service.CancelAsync(existentMembership.PublicId, CancellationToken.None);
 
         //Assert
         result.IsFailure.Should().BeTrue();

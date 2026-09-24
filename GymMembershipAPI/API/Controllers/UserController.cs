@@ -19,9 +19,9 @@ public class UserController : ControllerBase
 
     // Hereda [Authorize] automáticamente
     [HttpGet("{userPublicId:guid}")]
-    public async Task<IActionResult> GetyPublicIdAsync(Guid userPublicId)
+    public async Task<IActionResult> GetyPublicIdAsync(Guid userPublicId, CancellationToken ct)
     {
-        var result = await _userService.GetByPublicIdAsync(userPublicId);
+        var result = await _userService.GetByPublicIdAsync(userPublicId, ct);
         if (result.IsFailure) return NotFound(new { message = result.Error.Message });
         return Ok(new
         {
@@ -34,9 +34,9 @@ public class UserController : ControllerBase
 
     [HttpPost]
     [AllowAnonymous] // Excepción: Público
-    public async Task<IActionResult> CreateAsync([FromBody] UserCreateRequestDto dto)
+    public async Task<IActionResult> CreateAsync([FromBody] UserCreateRequestDto dto, CancellationToken ct)
     {
-        var result = await _userService.CreateAsync(dto);
+        var result = await _userService.CreateAsync(dto, ct);
         if (result.IsFailure) return BadRequest(new { message = result.Error.Message });
         return Ok(new
         {

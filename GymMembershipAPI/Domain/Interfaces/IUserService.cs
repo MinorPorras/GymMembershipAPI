@@ -6,5 +6,5 @@ namespace GymMembershipAPI.Domain.Interfaces;
 
 public interface IUserService : IServiceBase<User>
 {
-    Task<Result<User>> CreateAsync(UserCreateRequestDto dto);
+    Task<Result<User>> CreateAsync(UserCreateRequestDto dto, CancellationToken ct);
 }

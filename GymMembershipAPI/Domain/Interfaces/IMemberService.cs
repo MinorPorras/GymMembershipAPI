@@ -6,9 +6,9 @@ namespace GymMembershipAPI.Domain.Interfaces;
 
 public interface IMemberService : IServiceBase<Member>
 {
-    public Task<Result<Member>> CreateAsync(MemberCreateDto dto);
-    public Task<Result<Member>> UpdateAsync(Guid publicId, MemberUpdateDto dto);
-    public Task<Result> DeleteAsync(Guid publicId);
-    public Task<Result<List<Member>>> GetAllAsync();
+    public Task<Result<Member>> CreateAsync(MemberCreateDto dto, CancellationToken ct);
+    public Task<Result<Member>> UpdateAsync(Guid publicId, MemberUpdateDto dto, CancellationToken ct);
+    public Task<Result> DeleteAsync(Guid publicId, CancellationToken ct);
+    public Task<Result<List<Member>>> GetAllAsync(CancellationToken ct);
 
 }

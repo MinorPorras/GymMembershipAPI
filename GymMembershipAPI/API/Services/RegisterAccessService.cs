@@ -18,21 +18,21 @@ public class RegisterAccessService : IRegisterAccessService
         _context = context;
     }
 
-    public async Task<Result<RegisterAccess>> GetByPublicIdAsync(Guid publicId)
+    public async Task<Result<RegisterAccess>> GetByPublicIdAsync(Guid publicId, CancellationToken ct)
     {
-        var entity = await _context.RegisterAccesses.FirstOrDefaultAsync(r => r.PublicId == publicId);
+        var entity = await _context.RegisterAccesses.FirstOrDefaultAsync(r => r.PublicId == publicId, ct);
         return entity == null
             ? Result<RegisterAccess>.Failure(RegisterAccessErrors.NotFound)
             : Result<RegisterAccess>.Success(entity);
     }
 
-    public async Task<Result<RegisterAccess>> RegisterAsync(RegisterAccessRequestDto dto)
+    public async Task<Result<RegisterAccess>> RegisterAsync(RegisterAccessRequestDto dto, CancellationToken ct)
     {
-        var member = await _context.Members.FirstOrDefaultAsync(r => r.PublicId == dto.MemberPublicId);
+        var member = await _context.Members.FirstOrDefaultAsync(r => r.PublicId == dto.MemberPublicId, ct);
         if (member == null) return Result<RegisterAccess>.Failure(RegisterAccessErrors.NotFound);
 
         var hasMembership = await _context.Memberships
-            .AnyAsync(r => r.MemberId == member.Id && r.IsActive && r.EndDate > DateTime.UtcNow);
+            .AnyAsync(r => r.MemberId == member.Id && r.IsActive && r.EndDate > DateTime.UtcNow, ct);
 
         var entity = new RegisterAccess()
         {
@@ -43,7 +43,7 @@ public class RegisterAccessService : IRegisterAccessService
         try
         {
             _context.RegisterAccesses.Add(entity);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(ct);
             return Result<RegisterAccess>.Success(entity);
         }
         catch (Exception e)
@@ -53,20 +53,21 @@ public class RegisterAccessService : IRegisterAccessService
         }
     }
 
-    public async Task<Result<List<RegisterAccess>>> GetAllAsync() => Result<List<RegisterAccess>>.Success(
-        await _context.RegisterAccesses.ToListAsync()
-    );
-
-    public async Task<Result<List<RegisterAccess>>> GetByDateAsync(DateTime date) =>
+    public async Task<Result<List<RegisterAccess>>> GetAllAsync(CancellationToken ct) =>
         Result<List<RegisterAccess>>.Success(
-            await _context.RegisterAccesses.Where(r => r.AccessDate.Date == date.Date).ToListAsync()
+            await _context.RegisterAccesses.ToListAsync(ct)
         );
 
-    public async Task<Result<List<RegisterAccess>>> GetByMemberPublicIdAsync(Guid memberPublicId)
+    public async Task<Result<List<RegisterAccess>>> GetByDateAsync(DateTime date, CancellationToken ct) =>
+        Result<List<RegisterAccess>>.Success(
+            await _context.RegisterAccesses.Where(r => r.AccessDate.Date == date.Date).ToListAsync(ct)
+        );
+
+    public async Task<Result<List<RegisterAccess>>> GetByMemberPublicIdAsync(Guid memberPublicId, CancellationToken ct)
     {
         var list = await _context.RegisterAccesses
             .Where(r => r.Member.PublicId == memberPublicId)
-            .ToListAsync();
+            .ToListAsync(ct);
 
         return Result<List<RegisterAccess>>.Success(list);
     }
