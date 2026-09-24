@@ -1,6 +1,7 @@
 ﻿using GymMembershipAPI.API.DTOs.Auth;
 using GymMembershipAPI.Domain.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace GymMembershipAPI.API.Controllers;
 
@@ -18,6 +19,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("Login")]
+    [EnableRateLimiting("LoginLimit")]
     public async Task<IActionResult> Login([FromBody] LoginRequestDto dto)
     {
         var result = await _authService.LoginAsync(dto);

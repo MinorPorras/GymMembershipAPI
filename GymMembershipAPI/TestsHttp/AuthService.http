@@ -1,0 +1,81 @@
+﻿@baseUrl = http://localhost:5218
+@contentType = application/json
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJlZTJiMzAxNS0wN2Y2LTRkYjgtYTcxYS05YmNhYjY2NmRjNmMiLCJlbWFpbCI6ImFkbWluQGd5bS5jb20iLCJyb2xlIjoiQWRtaW4iLCJqdGkiOiI1MWI5NzVkYi02MTBiLTQxNjktODhmYi03Y2JjOWI3YjBjYzkiLCJleHAiOjE3OTAyMjEzMDgsImlzcyI6Ikd5bU1lbWJlcnNoaXBBUEkiLCJhdWQiOiJHeW1NZW1iZXJzaGlwQ2xpZW50In0.iEi9No-j_6aHCTUU82efgXhy-i5SK0lergd2XfMGrCo
+
+###
+# Login  con clave incorrecta llegar al limit despues de 5 intentos
+POST {{baseUrl}}/api/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "admin@gym.com",
+  "password": "gymDbPassword2003 el"
+}
+
+###
+# PASO 1: Login como ADMIN (Ejecuta esto primero para obtener el token)
+POST {{baseUrl}}/api/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "admin@gym.com",
+  "password": "gymDbPassword2003!"
+}
+
+###
+# PASO 2: Crear un Miembro (Pega el token del Admin en la variable token de arriba)
+POST {{baseUrl}}/api/member
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "name": "Juan Miembro",
+  "email": "juan.miembro@gym.com",
+  "phone": "555-1111",
+  "membershipTypePublicId": "a23e6a52-ab2c-44f1-bd6d-f427eb3bc29c"
+}
+
+###
+# PASO 3: Crear Usuario vinculado a ese Miembro
+# IMPORTANTE: Pega el "publicId" que te dio el Paso 2 en el campo memberPublicId
+POST {{baseUrl}}/api/user
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "email": "juan.miembro@gym.com",
+  "password": "Member123!",
+  "role": "Member",
+  "memberPublicId": "7216f7fa-23eb-4e2a-97ab-1f468f5eeb6c"
+}
+
+###
+# PASO 4: Login como MIEMBRO (Ejecuta esto para obtener el token de miembro)
+POST {{baseUrl}}/api/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "juan.miembro@gym.com",
+  "password": "Member123!"
+}
+
+###
+# PASO 5: PRUEBA DE PERMISOS - Miembro intenta ver TODOS los miembros
+# IMPORTANTE: Borra el token de arriba y pega el nuevo token de miembro.
+# Resultado esperado: 403 Forbidden
+GET {{baseUrl}}/api/member
+Authorization: Bearer {{token}}
+
+###
+# PASO 6: PRUEBA DE PERMISOS - Admin intenta ver TODOS los miembros
+# IMPORTANTE: Vuelve a pegar el token del Admin en la variable token de arriba.
+# Resultado esperado: 200 OK
+GET {{baseUrl}}/api/member
+Authorization: Bearer {{token}}
+
+###
+# PASO 7: PRUEBA DEL MANEJO GLOBAL DE ERRORES
+# Instrucción: Agrega 'throw new Exception("Prueba");' en MemberService.GetAllAsync()
+# Resultado esperado: 500 con JSON limpio
+GET {{baseUrl}}/api/member
+Authorization: Bearer {{token}}
