@@ -1,4 +1,6 @@
 ﻿using GymMembershipAPI.API.DTOs.Booking;
+using GymMembershipAPI.API.DTOs.Shared;
+using GymMembershipAPI.API.Extensions;
 using GymMembershipAPI.API.Mappers;
 using GymMembershipAPI.Domain.Entities;
 using GymMembershipAPI.Domain.Interfaces;
@@ -24,6 +26,7 @@ public class BookingService : IBookingService
         var entity = await _context.Bookings
             .Include(e => e.Member)
             .Include(e => e.GroupClass)
+            .OrderByDescending(b => b.CreatedAt)
             .FirstOrDefaultAsync(e => e.PublicId == publicId, ct);
         return entity == null
             ? Result<Booking>.Failure(BookingErrors.NotFound)
@@ -31,33 +34,67 @@ public class BookingService : IBookingService
     }
 
 
-    public async Task<Result<List<Booking>>> GetAllAsync(CancellationToken ct)
+    public async Task<Result<PaginatedResult<Booking>>> GetAllAsync(int page, int pageSize, CancellationToken ct)
     {
-        var list = await _context.Bookings
-            .Include(e => e.Member)
-            .Include(e => e.GroupClass)
-            .ToListAsync(ct);
-        return Result<List<Booking>>.Success(list);
+        try
+        {
+            var result = await _context.Bookings
+                .Include(b => b.Member)
+                .Include(b => b.GroupClass)
+                .OrderByDescending(b => b.CreatedAt)
+                .ToPaginatedResultAsync(page, pageSize, ct);
+            return Result<PaginatedResult<Booking>>.Success(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error inesperado al buscar todos las reservas");
+            return Result<PaginatedResult<Booking>>.Failure(
+                Error.Unknown("Error inesperado al buscar todos las reservas"));
+        }
     }
 
-    public async Task<Result<List<Booking>>> GetByMemberPublicIdAsync(Guid memberPublicId, CancellationToken ct)
+    public async Task<Result<PaginatedResult<Booking>>> GetByMemberPublicIdAsync(Guid memberPublicId, int page,
+        int pageSize, CancellationToken ct)
     {
-        var list = await _context.Bookings
-            .Include(e => e.Member)
-            .Include(e => e.GroupClass)
-            .Where(e => e.Member.PublicId == memberPublicId)
-            .ToListAsync(ct);
-        return Result<List<Booking>>.Success(list);
+        try
+        {
+            var result = await _context.Bookings
+                .Where(b => b.Member.PublicId == memberPublicId)
+                .Include(b => b.Member)
+                .Include(b => b.GroupClass)
+                .OrderByDescending(b => b.CreatedAt)
+                .ToPaginatedResultAsync(page, pageSize, ct);
+            return Result<PaginatedResult<Booking>>.Success(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error inesperado al buscar todos las reservas por ID publica del miembro: {guid}",
+                memberPublicId);
+            return Result<PaginatedResult<Booking>>.Failure(
+                Error.Unknown("Error inesperado al buscar todos las reservas"));
+        }
     }
 
-    public async Task<Result<List<Booking>>> GetByClassPublicIdAsync(Guid groupClassPublicId, CancellationToken ct)
+    public async Task<Result<PaginatedResult<Booking>>> GetByClassPublicIdAsync(Guid groupClassPublicId, int page,
+        int pageSize, CancellationToken ct)
     {
-        var list = await _context.Bookings
-            .Include(e => e.Member)
-            .Include(e => e.GroupClass)
-            .Where(e => e.GroupClass.PublicId == groupClassPublicId)
-            .ToListAsync(ct);
-        return Result<List<Booking>>.Success(list);
+        try
+        {
+            var result = await _context.Bookings
+                .Include(b => b.Member)
+                .Include(b => b.GroupClass)
+                .Where(b => b.GroupClass.PublicId == groupClassPublicId)
+                .OrderByDescending(b => b.CreatedAt)
+                .ToPaginatedResultAsync(page, pageSize, ct);
+            return Result<PaginatedResult<Booking>>.Success(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error inesperado al buscar todos las reservas con el ID publico {id}",
+                groupClassPublicId);
+            return Result<PaginatedResult<Booking>>.Failure(
+                Error.Unknown("Error inesperado al buscar todos las reservas con el ID publico {id}"));
+        }
     }
 
     public async Task<Result<Booking>> CreateAsync(BookingRequestDto dto, CancellationToken ct)

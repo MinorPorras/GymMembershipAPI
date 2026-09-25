@@ -77,6 +77,7 @@ public class BookingServiceTests
     [Fact]
     public async Task GetAllAsync_ReturnsSuccessAndList()
     {
+        // Arrange
         await using var context = TestDbContextFactory.Create();
         var service = new BookingService(_logger.Object, context);
 
@@ -111,40 +112,54 @@ public class BookingServiceTests
         context.Bookings.AddRange(booking1, booking2);
         await context.SaveChangesAsync();
 
-        //Act
-        var result = await service.GetAllAsync(CancellationToken.None);
+        // Act
+        var result = await service.GetAllAsync(page: 1, pageSize: 10, CancellationToken.None);
 
-        //Assert
+        // Assert
         result.IsSuccess.Should().BeTrue();
-        result.Value.Should().NotBeNullOrEmpty();
-        result.Value.Count.Should().Be(2);
-        result.Value.Should().BeEquivalentTo([booking1, booking2]);
+        result.Value.Should().NotBeNull();
+
+        // Metadatos
+        result.Value.TotalRecords.Should().Be(2);
+        result.Value.TotalPages.Should().Be(1);
+
+        // Datos
+        result.Value.Data.Should().HaveCount(2);
+        // Tip: Es más seguro verificar IDs que BeEquivalentTo completo con EF Core
+        result.Value.Data.Select(b => b.Id).Should().Contain(new[] { booking1.Id, booking2.Id });
     }
 
     [Fact]
-    public async Task GetAllAsync_EmptyList_ReturnsSuccessAndList()
+    public async Task GetAllAsync_EmptyList_ReturnsSuccessAndEmptyList()
     {
+        // Arrange
         await using var context = TestDbContextFactory.Create();
         var service = new BookingService(_logger.Object, context);
 
-        //Act
-        var result = await service.GetAllAsync(CancellationToken.None);
+        // Act
+        var result = await service.GetAllAsync(page: 1, pageSize: 10, CancellationToken.None);
 
-        //Assert
+        // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
-        result.Value.Count.Should().Be(0);
+
+        // Metadatos
+        result.Value.TotalRecords.Should().Be(0);
+        result.Value.TotalPages.Should().Be(0);
+
+        // Datos
+        result.Value.Data.Should().BeEmpty();
     }
 
     [Fact]
     public async Task GetByMemberPublicIdAsync_ValidData_ReturnsSuccess()
     {
+        // Arrange
         await using var context = TestDbContextFactory.Create();
         var service = new BookingService(_logger.Object, context);
 
         var member1 = new Member("name", "test@email.com", "1111-1111");
         var member2 = new Member("name2", "test2@email.com", "2222-2222");
-
         context.Members.AddRange(member1, member2);
         await context.SaveChangesAsync();
 
@@ -160,34 +175,37 @@ public class BookingServiceTests
 
         var booking1 = new Booking()
         {
-            MemberId = member1.Id,
-            GroupClassId = groupClass.Id,
-            CreatedAt = DateTime.UtcNow.AddDays(-3),
+            MemberId = member1.Id, GroupClassId = groupClass.Id, CreatedAt = DateTime.UtcNow.AddDays(-3),
             State = "Confirmada"
         };
         var booking2 = new Booking()
         {
-            MemberId = member2.Id,
-            GroupClassId = groupClass.Id,
-            CreatedAt = DateTime.UtcNow.AddDays(-3),
+            MemberId = member2.Id, GroupClassId = groupClass.Id, CreatedAt = DateTime.UtcNow.AddDays(-3),
             State = "Confirmada"
         };
         context.Bookings.AddRange(booking1, booking2);
         await context.SaveChangesAsync();
 
-        //Act
-        var result = await service.GetByMemberPublicIdAsync(member1.PublicId, CancellationToken.None);
+        // Act
+        var result =
+            await service.GetByMemberPublicIdAsync(member1.PublicId, page: 1, pageSize: 10, CancellationToken.None);
 
-        //Assert
+        // Assert
         result.IsSuccess.Should().BeTrue();
-        result.Value.Should().NotBeNullOrEmpty();
-        result.Value.Count.Should().Be(1);
-        result.Value.Should().BeEquivalentTo([booking1]);
+        result.Value.Should().NotBeNull();
+
+        // Metadatos
+        result.Value.TotalRecords.Should().Be(1);
+
+        // Datos
+        result.Value.Data.Should().HaveCount(1);
+        result.Value.Data.First().MemberId.Should().Be(member1.Id);
     }
 
     [Fact]
     public async Task GetByMemberPublicIdAsync_InvalidPublicId_ReturnsSuccessButEmptyList()
     {
+        // Arrange
         await using var context = TestDbContextFactory.Create();
         var service = new BookingService(_logger.Object, context);
 
@@ -196,88 +214,84 @@ public class BookingServiceTests
         await context.SaveChangesAsync();
 
         var groupClass = new GroupClass()
-        {
-            Name = "test",
-            Instructor = "instructor",
-            DateHour = DateTime.UtcNow.AddDays(3),
-            MaxMembers = 1
-        };
+            { Name = "test", Instructor = "instructor", DateHour = DateTime.UtcNow.AddDays(3), MaxMembers = 1 };
         context.GroupClasses.Add(groupClass);
         await context.SaveChangesAsync();
 
-        var existingBooking = new Booking()
+        context.Bookings.Add(new Booking()
         {
-            MemberId = member.Id,
-            GroupClassId = groupClass.Id,
-            CreatedAt = DateTime.UtcNow.AddDays(-3),
+            MemberId = member.Id, GroupClassId = groupClass.Id, CreatedAt = DateTime.UtcNow.AddDays(-3),
             State = "Confirmada"
-        };
-        context.Bookings.Add(existingBooking);
+        });
         await context.SaveChangesAsync();
 
         var inexistentGuid = Guid.NewGuid();
 
-        //Act
-        var result = await service.GetByMemberPublicIdAsync(inexistentGuid, CancellationToken.None);
+        // Act
+        var result =
+            await service.GetByMemberPublicIdAsync(inexistentGuid, page: 1, pageSize: 10, CancellationToken.None);
 
-        //Assert
+        // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
-        result.Value.Count.Should().Be(0);
+
+        // Metadatos
+        result.Value.TotalRecords.Should().Be(0);
+
+        // Datos
+        result.Value.Data.Should().BeEmpty();
     }
 
     [Fact]
     public async Task GetByClassPublicIdAsync_ValidData_ReturnsSuccess()
     {
+        // Arrange
         await using var context = TestDbContextFactory.Create();
         var service = new BookingService(_logger.Object, context);
 
         var member1 = new Member("name", "test@email.com", "1111-1111");
         var member2 = new Member("name2", "test2@email.com", "2222-2222");
-
         context.Members.AddRange(member1, member2);
         await context.SaveChangesAsync();
 
         var groupClass = new GroupClass()
-        {
-            Name = "test",
-            Instructor = "instructor",
-            DateHour = DateTime.UtcNow.AddDays(3),
-            MaxMembers = 2
-        };
+            { Name = "test", Instructor = "instructor", DateHour = DateTime.UtcNow.AddDays(3), MaxMembers = 2 };
         context.GroupClasses.Add(groupClass);
         await context.SaveChangesAsync();
 
         var booking1 = new Booking()
         {
-            MemberId = member1.Id,
-            GroupClassId = groupClass.Id,
-            CreatedAt = DateTime.UtcNow.AddDays(-3),
+            MemberId = member1.Id, GroupClassId = groupClass.Id, CreatedAt = DateTime.UtcNow.AddDays(-3),
             State = "Confirmada"
         };
         var booking2 = new Booking()
         {
-            MemberId = member2.Id,
-            GroupClassId = groupClass.Id,
-            CreatedAt = DateTime.UtcNow.AddDays(-3),
+            MemberId = member2.Id, GroupClassId = groupClass.Id, CreatedAt = DateTime.UtcNow.AddDays(-3),
             State = "Confirmada"
         };
         context.Bookings.AddRange(booking1, booking2);
         await context.SaveChangesAsync();
 
-        //Act
-        var result = await service.GetByClassPublicIdAsync(groupClass.PublicId, CancellationToken.None);
+        // Act
+        var result =
+            await service.GetByClassPublicIdAsync(groupClass.PublicId, page: 1, pageSize: 10, CancellationToken.None);
 
-        //Assert
+        // Assert
         result.IsSuccess.Should().BeTrue();
-        result.Value.Should().NotBeNullOrEmpty();
-        result.Value.Count.Should().Be(2);
-        result.Value.Should().BeEquivalentTo([booking1, booking2]);
+        result.Value.Should().NotBeNull();
+
+        // Metadatos
+        result.Value.TotalRecords.Should().Be(2);
+
+        // Datos
+        result.Value.Data.Should().HaveCount(2);
+        result.Value.Data.Select(b => b.Id).Should().Contain(new[] { booking1.Id, booking2.Id });
     }
 
     [Fact]
     public async Task GetByClassPublicIdAsync_InvalidPublicId_ReturnsSuccessButEmptyList()
     {
+        // Arrange
         await using var context = TestDbContextFactory.Create();
         var service = new BookingService(_logger.Object, context);
 
@@ -286,34 +300,32 @@ public class BookingServiceTests
         await context.SaveChangesAsync();
 
         var groupClass = new GroupClass()
-        {
-            Name = "test",
-            Instructor = "instructor",
-            DateHour = DateTime.UtcNow.AddDays(3),
-            MaxMembers = 1
-        };
+            { Name = "test", Instructor = "instructor", DateHour = DateTime.UtcNow.AddDays(3), MaxMembers = 1 };
         context.GroupClasses.Add(groupClass);
         await context.SaveChangesAsync();
 
-        var existingBooking = new Booking()
+        context.Bookings.Add(new Booking()
         {
-            MemberId = member.Id,
-            GroupClassId = groupClass.Id,
-            CreatedAt = DateTime.UtcNow.AddDays(-3),
+            MemberId = member.Id, GroupClassId = groupClass.Id, CreatedAt = DateTime.UtcNow.AddDays(-3),
             State = "Confirmada"
-        };
-        context.Bookings.Add(existingBooking);
+        });
         await context.SaveChangesAsync();
 
         var inexistentGuid = Guid.NewGuid();
 
-        //Act
-        var result = await service.GetByClassPublicIdAsync(inexistentGuid, CancellationToken.None);
+        // Act
+        var result =
+            await service.GetByClassPublicIdAsync(inexistentGuid, page: 1, pageSize: 10, CancellationToken.None);
 
-        //Assert
+        // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
-        result.Value.Count.Should().Be(0);
+
+        // Metadatos
+        result.Value.TotalRecords.Should().Be(0);
+
+        // Datos
+        result.Value.Data.Should().BeEmpty();
     }
 
     #endregion
@@ -619,8 +631,8 @@ public class BookingServiceTests
             var type = new MembershipType("Basic", 9.99m, 1);
             seedContext.MembershipTypes.Add(type);
 
-            await seedContext.SaveChangesAsync(); 
-            
+            await seedContext.SaveChangesAsync();
+
             var membership = new Membership
             {
                 MemberId = member.Id,

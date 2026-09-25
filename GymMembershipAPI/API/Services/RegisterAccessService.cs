@@ -1,4 +1,6 @@
 ﻿using GymMembershipAPI.API.DTOs.RegisterAccess;
+using GymMembershipAPI.API.DTOs.Shared;
+using GymMembershipAPI.API.Extensions;
 using GymMembershipAPI.Domain.Entities;
 using GymMembershipAPI.Domain.Interfaces;
 using GymMembershipAPI.Domain.Results;
@@ -53,22 +55,62 @@ public class RegisterAccessService : IRegisterAccessService
         }
     }
 
-    public async Task<Result<List<RegisterAccess>>> GetAllAsync(CancellationToken ct) =>
-        Result<List<RegisterAccess>>.Success(
-            await _context.RegisterAccesses.ToListAsync(ct)
-        );
-
-    public async Task<Result<List<RegisterAccess>>> GetByDateAsync(DateTime date, CancellationToken ct) =>
-        Result<List<RegisterAccess>>.Success(
-            await _context.RegisterAccesses.Where(r => r.AccessDate.Date == date.Date).ToListAsync(ct)
-        );
-
-    public async Task<Result<List<RegisterAccess>>> GetByMemberPublicIdAsync(Guid memberPublicId, CancellationToken ct)
+    public async Task<Result<PaginatedResult<RegisterAccess>>> GetAllAsync(int page, int pageSize, CancellationToken ct)
     {
-        var list = await _context.RegisterAccesses
-            .Where(r => r.Member.PublicId == memberPublicId)
-            .ToListAsync(ct);
+        try
+        {
+            var pagedResult = await _context.RegisterAccesses
+                .OrderBy(m => m.Id)
+                .ToPaginatedResultAsync(page, pageSize, ct);
+            return Result<PaginatedResult<RegisterAccess>>.Success(pagedResult);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al obtener todos los registros de acceso");
+            return Result<PaginatedResult<RegisterAccess>>.Failure(Error.Unknown(ex.Message));
+        }
+    }
 
-        return Result<List<RegisterAccess>>.Success(list);
+    public async Task<Result<PaginatedResult<RegisterAccess>>> GetByDateAsync(DateTime date, int page, int pageSize,
+        CancellationToken ct)
+    {
+        try
+        {
+            var startOfDay = date.Date;
+            var endOfDay = startOfDay.AddDays(1);
+
+            var pagedResult = await _context.RegisterAccesses
+                .Where(m => m.AccessDate >= startOfDay && m.AccessDate < endOfDay)
+                .OrderByDescending(m => m.AccessDate)
+                .ToPaginatedResultAsync(page, pageSize, ct);
+            return Result<PaginatedResult<RegisterAccess>>.Success(pagedResult);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al obtener los registros de acceso por fecha");
+            return Result<PaginatedResult<RegisterAccess>>.Failure(Error.Unknown(ex.Message));
+        }
+    }
+
+    public async Task<Result<PaginatedResult<RegisterAccess>>> GetByMemberPublicIdAsync(
+        Guid memberPublicId,
+        int page,
+        int pageSize,
+        CancellationToken ct
+    )
+    {
+        try
+        {
+            var pagedResult = await _context.RegisterAccesses
+                .Where(m => m.Member.PublicId == memberPublicId)
+                .OrderBy(m => m.Id)
+                .ToPaginatedResultAsync(page, pageSize, ct);
+            return Result<PaginatedResult<RegisterAccess>>.Success(pagedResult);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al obtener los registros por la ID publica del usuario");
+            return Result<PaginatedResult<RegisterAccess>>.Failure(Error.Unknown(ex.Message));
+        }
     }
 }

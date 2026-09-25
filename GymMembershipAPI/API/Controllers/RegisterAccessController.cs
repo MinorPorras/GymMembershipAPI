@@ -1,4 +1,6 @@
 ﻿using GymMembershipAPI.API.DTOs.RegisterAccess;
+using GymMembershipAPI.API.DTOs.Shared;
+using GymMembershipAPI.API.Extensions;
 using GymMembershipAPI.API.Mappers;
 using GymMembershipAPI.Domain.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -29,10 +31,12 @@ public class RegisterAccessController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll(CancellationToken ct)
+    public async Task<IActionResult> GetAll(CancellationToken ct, [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10)
     {
-        var result = await _service.GetAllAsync(ct);
-        return Ok(RegisterAccessMapper.ToResponseDtos(result.Value));
+        var result = await _service.GetAllAsync(page, pageSize, ct);
+        var response = result.Value.MapTo(RegisterAccessMapper.ToResponseDtos);
+        return Ok(response);
     }
 
     [HttpGet("{publicId:guid}")]
@@ -45,30 +49,33 @@ public class RegisterAccessController : ControllerBase
     }
 
     [HttpGet("member/{memberPublicId:guid}")]
-    public async Task<IActionResult> GetByMemberPublicId([FromRoute] Guid memberPublicId, CancellationToken ct)
+    public async Task<IActionResult> GetByMemberPublicId([FromRoute] Guid memberPublicId, CancellationToken ct,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10)
     {
-        var result = await _service.GetByMemberPublicIdAsync(memberPublicId, ct);
-        var response = RegisterAccessMapper.ToResponseDtos(result.Value);
+        var result = await _service.GetByMemberPublicIdAsync(memberPublicId, page, pageSize, ct);
+        var response = result.Value.MapTo(RegisterAccessMapper.ToResponseDtos);
         return Ok(response);
     }
 
     [HttpGet("date/{date:datetime}")]
-    public async Task<IActionResult> GetByDate([FromRoute] DateTime date, CancellationToken ct)
+    public async Task<IActionResult> GetByDate([FromRoute] DateTime date, CancellationToken ct,
+        [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
     {
-        var result = await _service.GetByDateAsync(date, ct);
-        var response = RegisterAccessMapper.ToResponseDtos(result.Value);
+        var result = await _service.GetByDateAsync(date, page, pageSize, ct);
+        var response = result.Value.MapTo(RegisterAccessMapper.ToResponseDtos);
         return Ok(response);
     }
 
     [HttpGet("me/registeredAccesses")]
     [Authorize]
-    public async Task<IActionResult> GetMyAccesses(CancellationToken ct)
+    public async Task<IActionResult> GetMyAccesses(CancellationToken ct, int page = 1, int pageSize = 10)
     {
         var memberPublicId = GetMemberPublicIdFromToken();
         if (memberPublicId == null) return Forbid("Solo un miembro puede ver sus propios registros de acceso.");
 
-        var result = await _service.GetByMemberPublicIdAsync(memberPublicId.Value, ct);
-        var response = RegisterAccessMapper.ToResponseDtos(result.Value);
+        var result = await _service.GetByMemberPublicIdAsync(memberPublicId.Value, page, pageSize, ct);
+        var response = result.Value.MapTo(RegisterAccessMapper.ToResponseDtos);
         return Ok(response);
     }
 

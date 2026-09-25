@@ -1,4 +1,5 @@
 ﻿using GymMembershipAPI.API.DTOs.Booking;
+using GymMembershipAPI.API.Extensions;
 using GymMembershipAPI.API.Mappers;
 using GymMembershipAPI.Domain.Entities;
 using GymMembershipAPI.Domain.Interfaces;
@@ -21,10 +22,11 @@ public class BookingController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll(CancellationToken ct)
+    public async Task<IActionResult> GetAll(CancellationToken ct, [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10)
     {
-        var result = await _bookingService.GetAllAsync(ct);
-        var response = BookingMapper.ToResponseDtos(result.Value);
+        var result = await _bookingService.GetAllAsync(page, pageSize, ct);
+        var response = result.Value.MapTo(BookingMapper.ToResponseDtos);
         return Ok(response);
     }
 
@@ -38,30 +40,33 @@ public class BookingController : ControllerBase
     }
 
     [HttpGet("member/{memberId:guid}")]
-    public async Task<IActionResult> GetByMemberPublicId([FromRoute] Guid memberId, CancellationToken ct)
+    public async Task<IActionResult> GetByMemberPublicId([FromRoute] Guid memberId, CancellationToken ct,
+        [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
     {
-        var result = await _bookingService.GetByMemberPublicIdAsync(memberId, ct);
-        var response = BookingMapper.ToResponseDtos(result.Value);
+        var result = await _bookingService.GetByMemberPublicIdAsync(memberId, page, pageSize, ct);
+        var response = result.Value.MapTo(BookingMapper.ToResponseDtos);
         return Ok(response);
     }
 
     [HttpGet("class/{groupClassId:guid}")]
-    public async Task<IActionResult> GetByGroupClassId([FromRoute] Guid groupClassId, CancellationToken ct)
+    public async Task<IActionResult> GetByGroupClassId([FromRoute] Guid groupClassId, CancellationToken ct,
+        [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
     {
-        var result = await _bookingService.GetByClassPublicIdAsync(groupClassId, ct);
-        var response = BookingMapper.ToResponseDtos(result.Value);
+        var result = await _bookingService.GetByClassPublicIdAsync(groupClassId, page, pageSize, ct);
+        var response = result.Value.MapTo(BookingMapper.ToResponseDtos);
         return Ok(response);
     }
 
     [HttpGet("me/bookings")]
     [Authorize]
-    public async Task<IActionResult> GetMyBookings(CancellationToken ct)
+    public async Task<IActionResult> GetMyBookings(CancellationToken ct, [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10)
     {
         var memberPublicId = GetMemberPublicIdFromToken();
         if (memberPublicId == null) return Forbid("Solo miembros puede ver sus propias reservaciones aquí.");
 
-        var result = await _bookingService.GetByMemberPublicIdAsync(memberPublicId.Value, ct);
-        var response = BookingMapper.ToResponseDtos(result.Value);
+        var result = await _bookingService.GetByMemberPublicIdAsync(memberPublicId.Value, page, pageSize, ct);
+        var response = result.Value.MapTo(BookingMapper.ToResponseDtos);
         return Ok(response);
     }
 

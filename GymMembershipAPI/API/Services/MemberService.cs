@@ -1,4 +1,5 @@
 ﻿using GymMembershipAPI.API.DTOs.Members;
+using GymMembershipAPI.API.DTOs.Shared;
 using GymMembershipAPI.API.Mappers;
 using GymMembershipAPI.Domain.Entities;
 using GymMembershipAPI.Domain.Interfaces;
@@ -27,10 +28,24 @@ public class MemberService : IMemberService
             : Result<Member>.Success(entity);
     }
 
-    public async Task<Result<List<Member>>> GetAllAsync(CancellationToken ct)
+    public async Task<Result<PaginatedResult<Member>>> GetAllAsync(int page, int pageSize, CancellationToken ct)
     {
-        var list = await _context.Members.ToListAsync(ct);
-        return Result<List<Member>>.Success(list);
+        pageSize = Math.Clamp(pageSize, 1, 100);
+        page = Math.Max(1, page);
+
+        var totalRecord = await _context.Members.CountAsync(ct);
+
+        var skipAmount = (page - 1) * pageSize;
+
+        var data = await _context.Members
+            .OrderBy(m => m.Id)
+            .Skip(skipAmount)
+            .Take(pageSize)
+            .ToListAsync(ct);
+
+        return Result<PaginatedResult<Member>>.Success(
+            new PaginatedResult<Member>(data, page, pageSize, totalRecord)
+        );
     }
 
     public async Task<Result> DeleteAsync(Guid publicId, CancellationToken ct)

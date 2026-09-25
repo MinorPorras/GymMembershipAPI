@@ -1,4 +1,6 @@
 ﻿using GymMembershipAPI.API.DTOs.Members;
+using GymMembershipAPI.API.DTOs.Shared;
+using GymMembershipAPI.API.Extensions;
 using GymMembershipAPI.API.Mappers;
 using GymMembershipAPI.API.Services;
 using GymMembershipAPI.Domain.Entities;
@@ -24,12 +26,18 @@ public class MemberController : ControllerBase
     // GET
     [HttpGet]
     [Authorize(Roles = "Admin, Staff")]
-    public async Task<IActionResult> GetAll(CancellationToken ct)
+    public async Task<IActionResult> GetAll(
+        CancellationToken ct,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10
+    )
     {
-        var result = await _service.GetAllAsync(ct);
+        var result = await _service.GetAllAsync(page, pageSize, ct);
         if (result.IsFailure) return BadRequest(result.Error.Message);
-        var dtoList = MemberMapper.ToResponseDto(result.Value);
-        return Ok(dtoList);
+
+        var paginatedResponse = result.Value.MapTo(MemberMapper.ToResponseDto);
+
+        return Ok(paginatedResponse);
     }
 
     [HttpGet("{publicId}")]

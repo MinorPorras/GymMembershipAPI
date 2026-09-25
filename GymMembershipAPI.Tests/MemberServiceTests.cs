@@ -18,8 +18,9 @@ public class MemberServiceTests
     #region GetMethodsTests
 
     [Fact]
-    public async Task GetAllAsync_WithData_ReturnsSuccess()
+    public async Task GetAllPaginatedAsync_WithData_ReturnsSuccessWithCorrectMetadata()
     {
+        // Arrange
         await using var context = TestDbContextFactory.Create();
         var service = new MemberService(context, _logger.Object);
 
@@ -27,33 +28,79 @@ public class MemberServiceTests
         context.Members.Add(member);
         await context.SaveChangesAsync();
 
-        //Act
-        var result = await service.GetAllAsync(CancellationToken.None);
+        // Act: Pasamos page 1 y pageSize 10
+        var result = await service.GetAllAsync(page: 1, pageSize: 10, CancellationToken.None);
 
-        //Assert
+        // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
-        result.Value.Count.Should().BeGreaterThan(0);
-        result.Value[0].Name.Should().Be("Test");
-        result.Value[0].Email.Should().Be(member.Email);
-        result.Value[0].Phone.Should().Be(member.Phone);
-        result.Value[0].IsActive.Should().BeFalse();
+
+        // 1. Verificamos los Metadatos (La gran diferencia con el test anterior)
+        result.Value.TotalRecords.Should().Be(1);
+        result.Value.CurrentPage.Should().Be(1);
+        result.Value.PageSize.Should().Be(10);
+        result.Value.TotalPages.Should().Be(1);
+
+        // 2. Verificamos los Datos
+        result.Value.Data.Should().HaveCount(1);
+        var firstMember = result.Value.Data.First();
+        
+        firstMember.Name.Should().Be("Test");
+        firstMember.Email.Should().Be(member.Email);
+        firstMember.Phone.Should().Be(member.Phone);
+        firstMember.IsActive.Should().BeFalse();
     }
 
     [Fact]
-    public async Task GetAllAsync_WithEmptyData_ReturnsSuccessAndEmptyList()
+    public async Task GetAllPaginatedAsync_WithEmptyData_ReturnsSuccessAndEmptyList()
     {
+        // Arrange
         await using var context = TestDbContextFactory.Create();
         var service = new MemberService(context, _logger.Object);
 
+        // Act
+        var result = await service.GetAllAsync(page: 1, pageSize: 10, CancellationToken.None);
 
-        //Act
-        var result = await service.GetAllAsync(CancellationToken.None);
-
-        //Assert
+        // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
-        result.Value.Count.Should().Be(0);
+
+        // Metadatos en vacío
+        result.Value.TotalRecords.Should().Be(0);
+        result.Value.TotalPages.Should().Be(0); // Math.Ceiling(0 / 10.0) es 0
+
+        // Datos vacíos
+        result.Value.Data.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetAllPaginatedAsync_WithMultiplePages_ReturnsCorrectSubsetOfData()
+    {
+        // Arrange
+        await using var context = TestDbContextFactory.Create();
+        var service = new MemberService(context, _logger.Object);
+
+        for (int i = 1; i <= 15; i++)
+        {
+            context.Members.Add(new Member($"Member {i}", $"test{i}@email.com", "1111-1111"));
+        }
+        await context.SaveChangesAsync();
+
+        // Act 1: Pedimos la Página 1 con tamaño 10
+        var resultPage1 = await service.GetAllAsync(page: 1, pageSize: 10, CancellationToken.None);
+
+        // Assert 1
+        resultPage1.Value.TotalRecords.Should().Be(15);
+        resultPage1.Value.TotalPages.Should().Be(2); // 15 / 10 = 1.5 -> Ceil = 2
+        resultPage1.Value.Data.Should().HaveCount(10); // Solo debe traer 10
+        resultPage1.Value.Data.First().Name.Should().Be("Member 1");
+
+        // Act 2: Pedimos la Página 2 con tamaño 10
+        var resultPage2 = await service.GetAllAsync(page: 2, pageSize: 10, CancellationToken.None);
+
+        // Assert 2
+        resultPage2.Value.Data.Should().HaveCount(5); // Solo deben quedar 5
+        resultPage2.Value.Data.First().Name.Should().Be("Member 11"); // Debe empezar donde terminó la anterior
     }
 
     [Fact]

@@ -158,8 +158,10 @@ public class RegisterAccessServiceTests
     [Fact]
     public async Task GetAll_WithExistentData_ReturnSuccess()
     {
+        // Arrange
         await using var context = TestDbContextFactory.Create();
         var service = new RegisterAccessService(_logger.Object, context);
+
         var entity = new RegisterAccess
         {
             MemberId = 1,
@@ -169,35 +171,53 @@ public class RegisterAccessServiceTests
         context.Add(entity);
         await context.SaveChangesAsync();
 
-        //Act
-        var result = await service.GetAllAsync(CancellationToken.None);
+        // Act
+        var result = await service.GetAllAsync(page: 1, pageSize: 10, CancellationToken.None);
 
-        //Assert
+        // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
-        result.Value.Count.Should().Be(1);
+
+        // Metadatos
+        result.Value.TotalRecords.Should().Be(1);
+        result.Value.CurrentPage.Should().Be(1);
+        result.Value.PageSize.Should().Be(10);
+
+        // Datos
+        result.Value.Data.Should().HaveCount(1);
+        result.Value.Data.First().MemberId.Should().Be(1);
+        result.Value.Data.First().AllowAccess.Should().BeTrue();
     }
 
     [Fact]
     public async Task GetAll_NoMatches_ReturnSuccessAndEmptyList()
     {
+        // Arrange
         await using var context = TestDbContextFactory.Create();
         var service = new RegisterAccessService(_logger.Object, context);
 
-        //Act
-        var result = await service.GetAllAsync(CancellationToken.None);
+        // Act
+        var result = await service.GetAllAsync(page: 1, pageSize: 10, CancellationToken.None);
 
-        //Assert
+        // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
-        result.Value.Count.Should().Be(0);
+
+        // Metadatos
+        result.Value.TotalRecords.Should().Be(0);
+        result.Value.TotalPages.Should().Be(0);
+
+        // Datos vacíos
+        result.Value.Data.Should().BeEmpty();
     }
 
     [Fact]
     public async Task GetByDateAsync_WithExistentData_ReturnSuccess()
     {
+        // Arrange
         await using var context = TestDbContextFactory.Create();
         var service = new RegisterAccessService(_logger.Object, context);
+
         var actualDate = DateTime.UtcNow;
         var entity = new RegisterAccess
         {
@@ -208,36 +228,51 @@ public class RegisterAccessServiceTests
         context.Add(entity);
         await context.SaveChangesAsync();
 
-        //Act
-        var result = await service.GetByDateAsync(actualDate, CancellationToken.None);
+        // Act
+        var result = await service.GetByDateAsync(actualDate, page: 1, pageSize: 10, CancellationToken.None);
 
-        //Assert
+        // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
-        result.Value.Count.Should().Be(1);
+
+        // Metadatos
+        result.Value.TotalRecords.Should().Be(1);
+
+        // Datos
+        result.Value.Data.Should().HaveCount(1);
+        result.Value.Data.First().AccessDate.Should().BeCloseTo(actualDate, TimeSpan.FromSeconds(1));
     }
 
     [Fact]
     public async Task GetByDateAsync_NoMatches_ReturnSuccessAndEmptyList()
     {
+        // Arrange
         await using var context = TestDbContextFactory.Create();
         var service = new RegisterAccessService(_logger.Object, context);
+
         var actualDate = DateTime.UtcNow;
 
-        //Act
-        var result = await service.GetByDateAsync(actualDate, CancellationToken.None);
+        // Act
+        var result = await service.GetByDateAsync(actualDate, page: 1, pageSize: 10, CancellationToken.None);
 
-        //Assert
+        // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
-        result.Value.Count.Should().Be(0);
+
+        // Metadatos
+        result.Value.TotalRecords.Should().Be(0);
+
+        // Datos vacíos
+        result.Value.Data.Should().BeEmpty();
     }
 
     [Fact]
     public async Task GetByMemberPublicIdAsync_ValidPublicId_ReturnSuccess()
     {
+        // Arrange
         await using var context = TestDbContextFactory.Create();
         var service = new RegisterAccessService(_logger.Object, context);
+
         var member = new Member("Test Member", "member@email.com", "8888-8888");
         context.Members.Add(member);
         await context.SaveChangesAsync();
@@ -252,46 +287,70 @@ public class RegisterAccessServiceTests
         context.Add(entity);
         await context.SaveChangesAsync();
 
-        //Act
-        var result = await service.GetByMemberPublicIdAsync(member.PublicId, CancellationToken.None);
+        // Act
+        var result =
+            await service.GetByMemberPublicIdAsync(member.PublicId, page: 1, pageSize: 10, CancellationToken.None);
 
-        //Assert
+        // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
-        result.Value.Count.Should().Be(1);
+
+        // Metadatos
+        result.Value.TotalRecords.Should().Be(1);
+
+        // Datos
+        result.Value.Data.Should().HaveCount(1);
+        result.Value.Data.First().MemberId.Should().Be(member.Id);
     }
 
     [Fact]
-    public async Task GetByMemberPublicIdAsync_ValidPublicIdButNoAccesses_ReturnSuccessValid()
+    public async Task GetByMemberPublicIdAsync_ValidPublicIdButNoAccesses_ReturnSuccessAndEmptyList()
     {
+        // Arrange
         await using var context = TestDbContextFactory.Create();
         var service = new RegisterAccessService(_logger.Object, context);
+
         var member = new Member("Test Member", "member@email.com", "8888-8888");
         context.Members.Add(member);
         await context.SaveChangesAsync();
 
-        //Act
-        var result = await service.GetByMemberPublicIdAsync(member.PublicId, CancellationToken.None);
+        // Act
+        var result =
+            await service.GetByMemberPublicIdAsync(member.PublicId, page: 1, pageSize: 10, CancellationToken.None);
 
-        //Assert
+        // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
-        result.Value.Count.Should().Be(0);
+
+        // Metadatos
+        result.Value.TotalRecords.Should().Be(0);
+
+        // Datos vacíos
+        result.Value.Data.Should().BeEmpty();
     }
 
     [Fact]
     public async Task GetByMemberPublicIdAsync_InvalidPublicId_ReturnSuccessAndEmptyList()
     {
+        // Arrange
         await using var context = TestDbContextFactory.Create();
         var service = new RegisterAccessService(_logger.Object, context);
+
         var inexistentGuid = Guid.NewGuid();
 
-        //Act
-        var result = await service.GetByMemberPublicIdAsync(inexistentGuid, CancellationToken.None);
+        // Act
+        var result =
+            await service.GetByMemberPublicIdAsync(inexistentGuid, page: 1, pageSize: 10, CancellationToken.None);
 
-        //Assert
+        // Assert
         result.IsSuccess.Should().BeTrue();
-        result.Value.Count.Should().Be(0);
+        result.Value.Should().NotBeNull();
+
+        // Metadatos
+        result.Value.TotalRecords.Should().Be(0);
+
+        // Datos vacíos
+        result.Value.Data.Should().BeEmpty();
     }
 
     #endregion
