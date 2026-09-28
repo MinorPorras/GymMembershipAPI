@@ -4,7 +4,7 @@ namespace GymMembershipAPI.Domain.Entities;
 
 public class User
 {
-    private User(string email, string passwordHash, UserRole role, int? memberId = null)
+    internal User(string email, string passwordHash, UserRole role, int? memberId = null)
     {
         Email = email;
         PasswordHash = passwordHash;
@@ -12,10 +12,14 @@ public class User
         MemberId = memberId;
     }
 
+    public User()
+    {
+    }
+
     public int Id { get; set; }
     public Guid PublicId { get; set; } = Guid.NewGuid();
-    public string Email { get; set; }
-    public string PasswordHash { get; set; }
+    public string Email { get; set; } = String.Empty;
+    public string PasswordHash { get; set; } = String.Empty;
 
     public UserRole Role { get; set; }
 
@@ -23,8 +27,8 @@ public class User
     public Member? Member { get; set; }
 
     //Factories
-    public static User CreateMemberUser(string email, string passwordHash, int memberId) 
-        => new (email, passwordHash, UserRole.Member, memberId);
+    public static User CreateMemberUser(string email, string passwordHash, int memberId)
+        => new(email, passwordHash, UserRole.Member, memberId);
 
     public static User CreateStaffUser(string email, string passwordHash, UserRole role)
     {

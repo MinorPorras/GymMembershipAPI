@@ -8,6 +8,7 @@ using GymMembershipAPI.Domain.Results;
 using GymMembershipAPI.Infraestructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Polly.Registry;
 using JwtRegisteredClaimNames = Microsoft.IdentityModel.JsonWebTokens.JwtRegisteredClaimNames;
 
 namespace GymMembershipAPI.API.Services;
@@ -15,38 +16,54 @@ namespace GymMembershipAPI.API.Services;
 public class AuthService : IAuthService
 {
     private readonly GymDbContext _context;
-    private readonly ILogger<AuthService> _logger;
     private readonly IConfiguration _configuration;
+    private readonly ILogger<AuthService> _logger;
+    private readonly ResiliencePipelineProvider<string> _pipelineProvider;
 
-    public AuthService(GymDbContext context, ILogger<AuthService> logger, IConfiguration configuration)
+    public AuthService(GymDbContext context, IConfiguration configuration,
+        ResiliencePipelineProvider<string> pipelineProvider, ILogger<AuthService> logger)
     {
         _context = context;
-        _logger = logger;
         _configuration = configuration;
+        _pipelineProvider = pipelineProvider;
+        _logger = logger;
     }
 
     public async Task<Result<LoginResponseDto>> LoginAsync(LoginRequestDto dto, CancellationToken ct)
     {
-        var user = await _context.Users
-            .Include(u => u.Member)
-            .FirstOrDefaultAsync(u => u.Email == dto.Email, cancellationToken: ct);
+        var pipeline = _pipelineProvider.GetPipeline("db-pipeline");
+        try
+        {
+            var user = await pipeline.ExecuteAsync<User>(async innerCt =>
+            {
+                return (await _context.Users
+                    .Include(u => u.Member)
+                    .FirstOrDefaultAsync(u => u.Email == dto.Email, cancellationToken: innerCt))!;
+            }, ct);
 
-        if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
-            return Result<LoginResponseDto>.Failure(AuthErrors.InvalidCredentials);
+            if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
+                return Result<LoginResponseDto>.Failure(AuthErrors.InvalidCredentials);
 
-        // Generar Token JWT
-        var token = GenerateJwtToken(user);
-        var expirationMinutes = Convert.ToDouble(_configuration["Jwt:ExpirationInMinutes"]);
-        var expiresIn = DateTime.UtcNow.AddMinutes(expirationMinutes);
+            // Generar Token JWT
+            var token = GenerateJwtToken(user);
+            var expirationMinutes = Convert.ToDouble(_configuration["Jwt:ExpirationInMinutes"]);
+            var expiresIn = DateTime.UtcNow.AddMinutes(expirationMinutes);
 
-        var response = new LoginResponseDto(
-            Token: token,
-            ExpiresIn: expiresIn,
-            Role: user.Role.ToString(),
-            MemberPublicId: user.Member?.PublicId
-        );
+            var response = new LoginResponseDto(
+                Token: token,
+                ExpiresIn: expiresIn,
+                Role: user.Role.ToString(),
+                MemberPublicId: user.Member?.PublicId
+            );
 
-        return Result<LoginResponseDto>.Success(response);
+            return Result<LoginResponseDto>.Success(response);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Fallo crítico tras agotar reintentos en Login");
+            
+            return Result<LoginResponseDto>.Failure(Error.Unknown("Error inesperado")); 
+        }
     }
 
     private string GenerateJwtToken(User user)
@@ -56,10 +73,10 @@ public class AuthService : IAuthService
 
         var claims = new List<Claim>
         {
-            new Claim(JwtRegisteredClaimNames.Sub, user.PublicId.ToString()),
-            new Claim(JwtRegisteredClaimNames.Email, user.Email),
-            new Claim("role", user.Role.ToString()),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new(JwtRegisteredClaimNames.Sub, user.PublicId.ToString()),
+            new(JwtRegisteredClaimNames.Email, user.Email),
+            new("role", user.Role.ToString()),
+            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
         };
 
         if (user.MemberId.HasValue && user.Member != null)
