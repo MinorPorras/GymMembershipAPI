@@ -2,20 +2,32 @@
 using GymMembershipAPI.API.DTOs.Booking;
 using GymMembershipAPI.API.Services;
 using GymMembershipAPI.Domain.Entities;
-using GymMembershipAPI.Domain.Interfaces;
 using GymMembershipAPI.Domain.Results;
 using GymMembershipAPI.Infraestructure.Data;
 using GymMembershipAPI.Tests.Helpers;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
+using Polly;
+using Polly.Registry;
 
 namespace GymMembershipAPI.Tests;
 
 public class BookingServiceTests
 {
     private readonly Mock<ILogger<BookingService>> _logger = new();
+    private readonly ResiliencePipelineProvider<string> _pipelineProvider;
+
+    public BookingServiceTests()
+    {
+        var services = new ServiceCollection();
+        services.AddResiliencePipeline("db-pipeline", builder => { builder.AddTimeout(TimeSpan.FromSeconds(30)); });
+
+        _pipelineProvider = services.BuildServiceProvider()
+            .GetRequiredService<ResiliencePipelineProvider<string>>();
+    }
+
 
     #region GetMethodTests
 
@@ -23,7 +35,7 @@ public class BookingServiceTests
     public async Task GetByPublicIdAsync_ValidData_ReturnsSuccess()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new BookingService(_logger.Object, context);
+        var service = new BookingService(_logger.Object, context, _pipelineProvider);
 
         var member = new Member("name", "test@email.com", "1111-1111");
         context.Members.Add(member);
@@ -63,7 +75,7 @@ public class BookingServiceTests
     public async Task GetByPrivateIdAsync_InexistentPublicId_ReturnsFailure()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new BookingService(_logger.Object, context);
+        var service = new BookingService(_logger.Object, context, _pipelineProvider);
         var inexistentGuid = Guid.NewGuid();
 
         //Act
@@ -79,7 +91,7 @@ public class BookingServiceTests
     {
         // Arrange
         await using var context = TestDbContextFactory.Create();
-        var service = new BookingService(_logger.Object, context);
+        var service = new BookingService(_logger.Object, context, _pipelineProvider);
 
         var member = new Member("name", "test@email.com", "1111-1111");
         context.Members.Add(member);
@@ -134,7 +146,7 @@ public class BookingServiceTests
     {
         // Arrange
         await using var context = TestDbContextFactory.Create();
-        var service = new BookingService(_logger.Object, context);
+        var service = new BookingService(_logger.Object, context, _pipelineProvider);
 
         // Act
         var result = await service.GetAllAsync(page: 1, pageSize: 10, CancellationToken.None);
@@ -156,7 +168,7 @@ public class BookingServiceTests
     {
         // Arrange
         await using var context = TestDbContextFactory.Create();
-        var service = new BookingService(_logger.Object, context);
+        var service = new BookingService(_logger.Object, context, _pipelineProvider);
 
         var member1 = new Member("name", "test@email.com", "1111-1111");
         var member2 = new Member("name2", "test2@email.com", "2222-2222");
@@ -207,7 +219,7 @@ public class BookingServiceTests
     {
         // Arrange
         await using var context = TestDbContextFactory.Create();
-        var service = new BookingService(_logger.Object, context);
+        var service = new BookingService(_logger.Object, context, _pipelineProvider);
 
         var member = new Member("name", "test@email.com", "1111-1111");
         context.Members.Add(member);
@@ -247,7 +259,7 @@ public class BookingServiceTests
     {
         // Arrange
         await using var context = TestDbContextFactory.Create();
-        var service = new BookingService(_logger.Object, context);
+        var service = new BookingService(_logger.Object, context, _pipelineProvider);
 
         var member1 = new Member("name", "test@email.com", "1111-1111");
         var member2 = new Member("name2", "test2@email.com", "2222-2222");
@@ -293,7 +305,7 @@ public class BookingServiceTests
     {
         // Arrange
         await using var context = TestDbContextFactory.Create();
-        var service = new BookingService(_logger.Object, context);
+        var service = new BookingService(_logger.Object, context, _pipelineProvider);
 
         var member = new Member("name", "test@email.com", "1111-1111");
         context.Members.Add(member);
@@ -336,7 +348,7 @@ public class BookingServiceTests
     public async Task CreateAsync_ValidData_ReturnsSuccess()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new BookingService(_logger.Object, context);
+        var service = new BookingService(_logger.Object, context, _pipelineProvider);
 
         var member = new Member("name", "test@email.com", "1111-1111");
         context.Members.Add(member);
@@ -383,7 +395,7 @@ public class BookingServiceTests
     public async Task CreateAsync_InexistentMemberPublicId_ReturnsFailure()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new BookingService(_logger.Object, context);
+        var service = new BookingService(_logger.Object, context, _pipelineProvider);
 
         var inexistentMemberPublicId = Guid.NewGuid();
         var inexistentClassPublicId = Guid.NewGuid();
@@ -402,7 +414,7 @@ public class BookingServiceTests
     public async Task CreateAsync_MemberWithoutMembership_ReturnsFailure()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new BookingService(_logger.Object, context);
+        var service = new BookingService(_logger.Object, context, _pipelineProvider);
 
         var member = new Member("name", "test@email.com", "1111-1111");
         context.Members.Add(member);
@@ -425,7 +437,7 @@ public class BookingServiceTests
     public async Task CreateAsync_MemberWithoutActiveMembership_ReturnsFailure()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new BookingService(_logger.Object, context);
+        var service = new BookingService(_logger.Object, context, _pipelineProvider);
 
         var member = new Member("name", "test@email.com", "1111-1111");
         context.Members.Add(member);
@@ -461,7 +473,7 @@ public class BookingServiceTests
     public async Task CreateAsync_InexistentGroupClassPublicId_ReturnsFailure()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new BookingService(_logger.Object, context);
+        var service = new BookingService(_logger.Object, context, _pipelineProvider);
 
         var member = new Member("name", "test@email.com", "1111-1111");
         context.Members.Add(member);
@@ -496,7 +508,7 @@ public class BookingServiceTests
     public async Task CreateAsync_MaxMembersReached_ReturnsFailure()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new BookingService(_logger.Object, context);
+        var service = new BookingService(_logger.Object, context, _pipelineProvider);
 
         var member = new Member("name", "test@email.com", "1111-1111");
         var member2 = new Member("name2", "test2@gmail.com", "2222-2222");
@@ -555,7 +567,7 @@ public class BookingServiceTests
     public async Task CreateAsync_AlreadyBookedClass_ReturnsFailure()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new BookingService(_logger.Object, context);
+        var service = new BookingService(_logger.Object, context, _pipelineProvider);
 
         var member = new Member("name", "test@email.com", "1111-1111");
         context.Members.Add(member);
@@ -658,7 +670,7 @@ public class BookingServiceTests
         // Usar el contexto que lanza la excepción
         await using var throwingContext = new ConcurrencyThrowingDbContext(options);
 
-        var service = new BookingService(_logger.Object, throwingContext);
+        var service = new BookingService(_logger.Object, throwingContext, _pipelineProvider);
         var dto = new BookingRequestDto(member.PublicId, groupClass.PublicId);
 
         // Act
@@ -690,7 +702,7 @@ public class BookingServiceTests
     public async Task CancelAsync_ValidPublicId_ReturnsSuccess()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new BookingService(_logger.Object, context);
+        var service = new BookingService(_logger.Object, context, _pipelineProvider);
         var member = new Member("name", "test@email.com", "1111-1111");
         context.Members.Add(member);
         await context.SaveChangesAsync();
@@ -745,7 +757,7 @@ public class BookingServiceTests
     public async Task CancelAsync_InvalidPublicId_ReturnsFailure()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new BookingService(_logger.Object, context);
+        var service = new BookingService(_logger.Object, context, _pipelineProvider);
         var inexistentPublicId = Guid.NewGuid();
 
         //Act
@@ -761,7 +773,7 @@ public class BookingServiceTests
     public async Task CancelAsync_AlreadyCanceledBooking_ReturnsFailure()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new BookingService(_logger.Object, context);
+        var service = new BookingService(_logger.Object, context, _pipelineProvider);
         var member = new Member("name", "test@email.com", "1111-1111");
         context.Members.Add(member);
         await context.SaveChangesAsync();

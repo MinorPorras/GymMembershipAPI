@@ -57,7 +57,7 @@ public class MembershipTypeService : IMembershipTypeService
             _logger.LogError(e,
                 "Error creating membership type with Name {MembershipTypeName}",
                 requestDto.Name);
-            return Result<MembershipType>.Failure(Error.Unknown(e.Message));
+            return Result<MembershipType>.Failure(Error.Unknown);
         }
     }
 
@@ -85,7 +85,7 @@ public class MembershipTypeService : IMembershipTypeService
             _logger.LogError(e,
                 "Error updating membership type {MembershipTypePublicId}",
                 publicId);
-            return Result<MembershipType>.Failure(Error.Unknown(e.Message));
+            return Result<MembershipType>.Failure(Error.Unknown);
         }
     }
 
@@ -104,7 +104,7 @@ public class MembershipTypeService : IMembershipTypeService
             _logger.LogError(e,
                 "Error deleting membership type {MembershipTypePublicId}",
                 publicId);
-            return Result.Failure(Error.Unknown(e.Message));
+            return Result.Failure(Error.Unknown);
         }
     }
 }

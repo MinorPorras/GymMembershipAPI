@@ -91,7 +91,7 @@ public class MembershipService : IMembershipService
         catch (Exception e)
         {
             _logger.LogError(e, "Failed to create membership for member {MemberPublicId}", dto.MemberPublicId);
-            return Result<Membership>.Failure(Error.Unknown(e.Message));
+            return Result<Membership>.Failure(Error.Unknown);
         }
     }
 
@@ -114,7 +114,7 @@ public class MembershipService : IMembershipService
         catch (Exception e)
         {
             _logger.LogError(e, "Failed to cancel membership {MembershipPublicId}", membershipPublicId);
-            return Result.Failure(Error.Unknown(e.Message));
+            return Result.Failure(Error.Unknown);
         }
     }
 }

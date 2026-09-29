@@ -4,14 +4,27 @@ using GymMembershipAPI.API.Services;
 using GymMembershipAPI.Domain.Entities;
 using GymMembershipAPI.Domain.Results;
 using GymMembershipAPI.Tests.Helpers;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
+using Polly;
+using Polly.Registry;
 
 namespace GymMembershipAPI.Tests;
 
 public class GroupClassServiceTests
 {
     private readonly Mock<ILogger<GroupClassService>> _logger = new();
+    private readonly ResiliencePipelineProvider<string> _pipelineProvider;
+
+    public GroupClassServiceTests()
+    {
+        var services = new ServiceCollection();
+        services.AddResiliencePipeline("db-pipeline", builder => { builder.AddTimeout(TimeSpan.FromSeconds(30)); });
+
+        _pipelineProvider = services.BuildServiceProvider()
+            .GetRequiredService<ResiliencePipelineProvider<string>>();
+    }
 
     #region GetMethods
 
@@ -19,7 +32,7 @@ public class GroupClassServiceTests
     public async Task GetByPublicIdAsync_ValidData_ReturnsSuccess()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new GroupClassService(_logger.Object, context);
+        var service = new GroupClassService(_logger.Object, context, _pipelineProvider);
 
         var groupClass = new GroupClass()
         {
@@ -44,7 +57,7 @@ public class GroupClassServiceTests
     public async Task GetByPublicIdAsync_InvalidPublicId_ReturnsFailure()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new GroupClassService(_logger.Object, context);
+        var service = new GroupClassService(_logger.Object, context, _pipelineProvider);
         var inexistentGuid = Guid.NewGuid();
 
         //Act
@@ -60,7 +73,7 @@ public class GroupClassServiceTests
     public async Task GetAllAsync_WithData_ReturnsSuccessAndList()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new GroupClassService(_logger.Object, context);
+        var service = new GroupClassService(_logger.Object, context, _pipelineProvider);
 
         var groupClass = new GroupClass()
         {
@@ -86,7 +99,7 @@ public class GroupClassServiceTests
     public async Task GetAllAsync_EmptyContext_ReturnsSuccess()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new GroupClassService(_logger.Object, context);
+        var service = new GroupClassService(_logger.Object, context, _pipelineProvider);
 
         //Act
         var result = await service.GetAllAsync(CancellationToken.None);
@@ -101,7 +114,7 @@ public class GroupClassServiceTests
     public async Task GetByDateAsync_ReturnsSuccess()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new GroupClassService(_logger.Object, context);
+        var service = new GroupClassService(_logger.Object, context, _pipelineProvider);
 
         var searchedDate = DateTime.UtcNow;
 
@@ -141,7 +154,7 @@ public class GroupClassServiceTests
     public async Task CreateAsync_ValidData_ReturnsSuccess()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new GroupClassService(_logger.Object, context);
+        var service = new GroupClassService(_logger.Object, context, _pipelineProvider);
         var dto = new GroupClassRequestDto("test", "testInstructor", DateTime.UtcNow.AddDays(3), 1);
 
         //Act
@@ -160,7 +173,7 @@ public class GroupClassServiceTests
     public async Task CreateAsync_DuplicatedName_ReturnsFailure()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new GroupClassService(_logger.Object, context);
+        var service = new GroupClassService(_logger.Object, context, _pipelineProvider);
 
         var duplicatedName = "Test Group";
         var groupClass = new GroupClass()
@@ -191,7 +204,7 @@ public class GroupClassServiceTests
     public async Task CreateAsync_DateOlderThanToday_ReturnsFailure()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new GroupClassService(_logger.Object, context);
+        var service = new GroupClassService(_logger.Object, context, _pipelineProvider);
         var dto = new GroupClassRequestDto("test", "testInstructor", DateTime.UtcNow.AddDays(-1), 1);
 
         //Act
@@ -211,7 +224,7 @@ public class GroupClassServiceTests
     public async Task UpdateAsync_ValidData_ReturnsSuccess()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new GroupClassService(_logger.Object, context);
+        var service = new GroupClassService(_logger.Object, context, _pipelineProvider);
 
         var originalClass = new GroupClass()
         {
@@ -241,7 +254,7 @@ public class GroupClassServiceTests
     public async Task UpdateAsync_InexistentPublicId_ReturnsFailure()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new GroupClassService(_logger.Object, context);
+        var service = new GroupClassService(_logger.Object, context, _pipelineProvider);
 
         var inexistentPublicId = Guid.NewGuid();
         var dto = new GroupClassRequestDto("test", "testInstructor", DateTime.UtcNow.AddDays(3), 1);
@@ -263,7 +276,7 @@ public class GroupClassServiceTests
     public async Task DeleteAsync_ValidData_ReturnSuccess()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new GroupClassService(_logger.Object, context);
+        var service = new GroupClassService(_logger.Object, context, _pipelineProvider);
 
         var originalClass = new GroupClass()
         {
@@ -289,7 +302,7 @@ public class GroupClassServiceTests
     public async Task DeleteAsync_InexistentPublicId_ReturnsSuccess()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new GroupClassService(_logger.Object, context);
+        var service = new GroupClassService(_logger.Object, context, _pipelineProvider);
 
         var originalClass = new GroupClass()
         {

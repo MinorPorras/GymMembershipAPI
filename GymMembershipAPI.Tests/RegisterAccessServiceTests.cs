@@ -1,17 +1,29 @@
 ﻿using FluentAssertions;
 using GymMembershipAPI.API.DTOs.RegisterAccess;
+using GymMembershipAPI.API.Extensions;
 using GymMembershipAPI.API.Services;
 using GymMembershipAPI.Domain.Entities;
 using GymMembershipAPI.Domain.Results;
 using GymMembershipAPI.Tests.Helpers;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
+using Polly;
+using Polly.Registry;
 
 namespace GymMembershipAPI.Tests;
 
 public class RegisterAccessServiceTests
 {
     private readonly Mock<ILogger<RegisterAccessService>> _logger = new();
+    private readonly ResiliencePipelineProvider<string> _pipelineProvider;
+
+    public RegisterAccessServiceTests()
+    {
+        var services = new ServiceCollection();
+        services.AddResiliencePipeline("db-pipeline", builder => { builder.AddTimeout(TimeSpan.FromSeconds(30)); });
+        _pipelineProvider = services.BuildServiceProvider().GetRequiredService<ResiliencePipelineProvider<string>>();
+    }
 
     #region CreateAsyncTests
 
@@ -20,7 +32,7 @@ public class RegisterAccessServiceTests
     {
         //Arrange
         await using var context = TestDbContextFactory.Create();
-        var service = new RegisterAccessService(_logger.Object, context);
+        var service = new RegisterAccessService(_logger.Object, context, _pipelineProvider);
 
         var member = new Member("Test Member", "member@email.com", "8888-8888");
         context.Members.Add(member);
@@ -62,7 +74,7 @@ public class RegisterAccessServiceTests
     public async Task RegisterAsync_InexistentMember_ReturnFailure()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new RegisterAccessService(_logger.Object, context);
+        var service = new RegisterAccessService(_logger.Object, context, _pipelineProvider);
 
         var inexistentGuid = Guid.NewGuid();
         var dto = new RegisterAccessRequestDto(inexistentGuid);
@@ -84,7 +96,7 @@ public class RegisterAccessServiceTests
     public async Task RegisterAsync_MemberWithoutMembership_ReturnSuccessButAllowAccessFalse()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new RegisterAccessService(_logger.Object, context);
+        var service = new RegisterAccessService(_logger.Object, context, _pipelineProvider);
 
         var member = new Member("Test Member", "member@email.com", "8888-8888");
         context.Members.Add(member);
@@ -116,7 +128,7 @@ public class RegisterAccessServiceTests
     public async Task GetByPublicIdAsync_WithValidData_ReturnSuccess()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new RegisterAccessService(_logger.Object, context);
+        var service = new RegisterAccessService(_logger.Object, context, _pipelineProvider);
         var entity = new RegisterAccess
         {
             MemberId = 1,
@@ -142,7 +154,7 @@ public class RegisterAccessServiceTests
     public async Task GetByPublicIdAsync_InvalidPublicId_ReturnFailure()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new RegisterAccessService(_logger.Object, context);
+        var service = new RegisterAccessService(_logger.Object, context, _pipelineProvider);
         var inexistentGuid = Guid.NewGuid();
 
         //Act
@@ -160,7 +172,7 @@ public class RegisterAccessServiceTests
     {
         // Arrange
         await using var context = TestDbContextFactory.Create();
-        var service = new RegisterAccessService(_logger.Object, context);
+        var service = new RegisterAccessService(_logger.Object, context, _pipelineProvider);
 
         var entity = new RegisterAccess
         {
@@ -194,7 +206,7 @@ public class RegisterAccessServiceTests
     {
         // Arrange
         await using var context = TestDbContextFactory.Create();
-        var service = new RegisterAccessService(_logger.Object, context);
+        var service = new RegisterAccessService(_logger.Object, context, _pipelineProvider);
 
         // Act
         var result = await service.GetAllAsync(page: 1, pageSize: 10, CancellationToken.None);
@@ -216,7 +228,7 @@ public class RegisterAccessServiceTests
     {
         // Arrange
         await using var context = TestDbContextFactory.Create();
-        var service = new RegisterAccessService(_logger.Object, context);
+        var service = new RegisterAccessService(_logger.Object, context, _pipelineProvider);
 
         var actualDate = DateTime.UtcNow;
         var entity = new RegisterAccess
@@ -248,7 +260,7 @@ public class RegisterAccessServiceTests
     {
         // Arrange
         await using var context = TestDbContextFactory.Create();
-        var service = new RegisterAccessService(_logger.Object, context);
+        var service = new RegisterAccessService(_logger.Object, context, _pipelineProvider);
 
         var actualDate = DateTime.UtcNow;
 
@@ -271,7 +283,7 @@ public class RegisterAccessServiceTests
     {
         // Arrange
         await using var context = TestDbContextFactory.Create();
-        var service = new RegisterAccessService(_logger.Object, context);
+        var service = new RegisterAccessService(_logger.Object, context, _pipelineProvider);
 
         var member = new Member("Test Member", "member@email.com", "8888-8888");
         context.Members.Add(member);
@@ -308,7 +320,7 @@ public class RegisterAccessServiceTests
     {
         // Arrange
         await using var context = TestDbContextFactory.Create();
-        var service = new RegisterAccessService(_logger.Object, context);
+        var service = new RegisterAccessService(_logger.Object, context, _pipelineProvider);
 
         var member = new Member("Test Member", "member@email.com", "8888-8888");
         context.Members.Add(member);
@@ -334,7 +346,7 @@ public class RegisterAccessServiceTests
     {
         // Arrange
         await using var context = TestDbContextFactory.Create();
-        var service = new RegisterAccessService(_logger.Object, context);
+        var service = new RegisterAccessService(_logger.Object, context, _pipelineProvider);
 
         var inexistentGuid = Guid.NewGuid();
 

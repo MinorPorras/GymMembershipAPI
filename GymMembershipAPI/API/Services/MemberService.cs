@@ -6,6 +6,7 @@ using GymMembershipAPI.Domain.Interfaces;
 using GymMembershipAPI.Domain.Results;
 using GymMembershipAPI.Infraestructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Polly.Registry;
 
 namespace GymMembershipAPI.API.Services;
 
@@ -13,11 +14,14 @@ public class MemberService : IMemberService
 {
     private readonly GymDbContext _context;
     private readonly ILogger<MemberService> _logger;
+    private readonly ResiliencePipelineProvider<string> _pipelineProvider;
 
-    public MemberService(GymDbContext context, ILogger<MemberService> logger)
+    public MemberService(GymDbContext context, ILogger<MemberService> logger,
+        ResiliencePipelineProvider<string> pipelineProvider)
     {
         _context = context;
         _logger = logger;
+        _pipelineProvider = pipelineProvider;
     }
 
     public async Task<Result<Member>> GetByPublicIdAsync(Guid publicId, CancellationToken ct)
@@ -61,71 +65,88 @@ public class MemberService : IMemberService
         catch (Exception e)
         {
             _logger.LogError(e, "Error al eliminar miembro {PublicId}", publicId);
-            return Result.Failure(Error.Unknown(e.Message));
+            return Result.Failure(Error.Unknown);
         }
     }
 
     public async Task<Result<Member>> CreateAsync(MemberCreateDto dto, CancellationToken ct)
     {
-        var membershipType = await _context.MembershipTypes
-            .FirstOrDefaultAsync(t => t.PublicId == dto.MembershipTypePublicId, ct);
+        var pipeline = _pipelineProvider.GetPipeline("db-pipeline");
 
-        if (membershipType == null)
-            return Result<Member>.Failure(MembershipTypeErrors.NotFound);
-
-        // Validar email duplicado
-        var emailExists = await _context.Members
-            .AnyAsync(x => x.Email == dto.Email, ct);
-
-        if (emailExists)
-            return Result<Member>.Failure(MemberErrors.EmailAlreadyExists);
-
-        var entity = MemberMapper.ToEntity(dto);
-
-        var initialMembership = new Membership
-        {
-            MembershipTypeId = membershipType.Id,
-            StartDate = DateTime.UtcNow,
-            EndDate = DateTime.UtcNow.AddMonths(membershipType.DurationMonths),
-            IsActive = true
-        };
-
-        entity.Memberships.Add(initialMembership);
         try
         {
-            _context.Members.Add(entity);
-            await _context.SaveChangesAsync(ct);
-            return Result<Member>.Success(entity);
+            return await pipeline.ExecuteAsync(
+                (Func<MemberCreateDto, CancellationToken, ValueTask<Result<Member>>>)Callback, dto, ct);
+
+            async ValueTask<Result<Member>> Callback(MemberCreateDto state, CancellationToken innerCt)
+            {
+                var membershipType = await _context.MembershipTypes
+                    .FirstOrDefaultAsync(t => t.PublicId == state.MembershipTypePublicId, innerCt);
+
+                if (membershipType == null)
+                    return Result<Member>.Failure(MembershipTypeErrors.NotFound);
+
+                // Validar email duplicado
+                var emailExists = await _context.Members
+                    .AnyAsync(x => x.Email == state.Email, innerCt);
+
+                if (emailExists)
+                    return Result<Member>.Failure(MemberErrors.EmailAlreadyExists);
+
+                var entity = MemberMapper.ToEntity(state);
+
+                var initialMembership = new Membership
+                {
+                    MembershipTypeId = membershipType.Id,
+                    StartDate = DateTime.UtcNow,
+                    EndDate = DateTime.UtcNow.AddMonths(membershipType.DurationMonths),
+                    IsActive = true
+                };
+
+                entity.Memberships.Add(initialMembership);
+
+                _context.Members.Add(entity);
+                await _context.SaveChangesAsync(innerCt);
+                return Result<Member>.Success(entity);
+            }
         }
         catch (Exception e)
         {
             _logger.LogError(e, "Error creating the Member with Name {Name} and Email {Email}", dto.Name, dto.Email);
-            return Result<Member>.Failure(Error.Unknown(e.Message));
+            return Result<Member>.Failure(Error.Unknown);
         }
     }
 
     public async Task<Result<Member>> UpdateAsync(Guid publicId, MemberUpdateDto dto, CancellationToken ct)
     {
-        var emailExists = await _context.Members
-            .AnyAsync(x => x.Email == dto.Email && x.PublicId != publicId, ct);
-        if (emailExists) return Result<Member>.Failure(MemberErrors.EmailAlreadyExists);
-
-        var entity = await _context.Members.FirstOrDefaultAsync(x => x.PublicId == publicId, ct);
-        if (entity == null) return Result<Member>.Failure(MemberErrors.NotFound);
-
+        var pipeline = _pipelineProvider.GetPipeline("db-pipeline");
         try
         {
-            entity.Name = dto.Name;
-            entity.Email = dto.Email;
-            entity.Phone = dto.Phone ?? "";
+            var state = (Id: publicId, Data: dto);
+            return await pipeline.ExecuteAsync(
+                (Func<(Guid, MemberUpdateDto dto), CancellationToken, ValueTask<Result<Member>>>)Callback, state, ct);
 
-            await _context.SaveChangesAsync(ct);
-            return Result<Member>.Success(entity);
+            async ValueTask<Result<Member>> Callback((Guid Id, MemberUpdateDto Data) s, CancellationToken innerCt)
+            {
+                var emailExists = await _context.Members
+                    .AnyAsync(x => x.Email == s.Data.Email && x.PublicId != s.Id, innerCt);
+                if (emailExists) return Result<Member>.Failure(MemberErrors.EmailAlreadyExists);
+
+                var entity = await _context.Members.FirstOrDefaultAsync(x => x.PublicId == s.Id, innerCt);
+                if (entity == null) return Result<Member>.Failure(MemberErrors.NotFound);
+
+                entity.Name = dto.Name;
+                entity.Email = dto.Email;
+                entity.Phone = dto.Phone ?? "";
+
+                await _context.SaveChangesAsync(innerCt);
+                return Result<Member>.Success(entity);
+            }
         }
         catch (Exception e)
         {
             _logger.LogError(e, "Error updating the Member {PublicId}", publicId);
-            return Result<Member>.Failure(Error.Unknown(e.Message));
+            return Result<Member>.Failure(Error.Unknown);
         }
     }
 }

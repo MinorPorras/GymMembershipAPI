@@ -35,10 +35,8 @@ public class UserService : IUserService
         if (emailExists) return Result<User>.Failure(AuthErrors.UserAlreadyExists);
 
         if (!Enum.TryParse<UserRole>(dto.Role, ignoreCase: true, out var parsedRole))
-            return Result<User>.Failure(
-                Error.Unknown("El rol proporcionado no es válido. Use 'Admin', 'Staff' o 'Member'."));
-
-
+            return Result<User>.Failure(Error.Unknown);
+        
         int? memberId = null;
         if (dto.MemberPublicId.HasValue)
         {

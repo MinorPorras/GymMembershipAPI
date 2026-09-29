@@ -62,7 +62,7 @@ public class AuthService : IAuthService
         {
             _logger.LogError(e, "Fallo crítico tras agotar reintentos en Login");
             
-            return Result<LoginResponseDto>.Failure(Error.Unknown("Error inesperado")); 
+            return Result<LoginResponseDto>.Failure(Error.Unknown); 
         }
     }
 

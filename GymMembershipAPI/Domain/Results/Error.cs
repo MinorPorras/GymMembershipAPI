@@ -3,7 +3,10 @@
 public record Error(string Code, string Message)
 {
     public static readonly Error None = new(string.Empty, string.Empty);
-    public static Error Unknown (string message) => new("General.Unknown", message);
+
+    public static readonly Error Unknown = new("General.Unknown",
+        "Ocurrió un error inesperado. Por favor, intente más tarde.");
+
     public static readonly Error InternalServerError = new("General.InternalServerError", "Internal Server Error");
     public static readonly Error NotImplemented = new("General.NotImplemented", "Feature not implemented");
     public static readonly Error BadGateway = new("General.BadGateway", "Bad Gateway");

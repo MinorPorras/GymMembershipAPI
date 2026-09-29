@@ -6,6 +6,7 @@ using GymMembershipAPI.Domain.Interfaces;
 using GymMembershipAPI.Domain.Results;
 using GymMembershipAPI.Infraestructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Polly.Registry;
 
 namespace GymMembershipAPI.API.Services;
 
@@ -13,11 +14,14 @@ public class RegisterAccessService : IRegisterAccessService
 {
     private readonly ILogger<RegisterAccessService> _logger;
     private readonly GymDbContext _context;
+    private readonly ResiliencePipelineProvider<string> _pipelineProvider;
 
-    public RegisterAccessService(ILogger<RegisterAccessService> logger, GymDbContext context)
+    public RegisterAccessService(ILogger<RegisterAccessService> logger, GymDbContext context,
+        ResiliencePipelineProvider<string> pipelineProvider)
     {
         _logger = logger;
         _context = context;
+        _pipelineProvider = pipelineProvider;
     }
 
     public async Task<Result<RegisterAccess>> GetByPublicIdAsync(Guid publicId, CancellationToken ct)
@@ -30,28 +34,45 @@ public class RegisterAccessService : IRegisterAccessService
 
     public async Task<Result<RegisterAccess>> RegisterAsync(RegisterAccessRequestDto dto, CancellationToken ct)
     {
-        var member = await _context.Members.FirstOrDefaultAsync(r => r.PublicId == dto.MemberPublicId, ct);
-        if (member == null) return Result<RegisterAccess>.Failure(RegisterAccessErrors.NotFound);
+        var pipeline = _pipelineProvider.GetPipeline("db-pipeline");
 
-        var hasMembership = await _context.Memberships
-            .AnyAsync(r => r.MemberId == member.Id && r.IsActive && r.EndDate > DateTime.UtcNow, ct);
-
-        var entity = new RegisterAccess()
-        {
-            MemberId = member.Id,
-            AccessDate = DateTime.UtcNow,
-            AllowAccess = hasMembership
-        };
         try
         {
-            _context.RegisterAccesses.Add(entity);
-            await _context.SaveChangesAsync(ct);
-            return Result<RegisterAccess>.Success(entity);
+            return await pipeline.ExecuteAsync(
+                (Func<RegisterAccessRequestDto, CancellationToken, ValueTask<Result<RegisterAccess>>>)Callback, dto,
+                ct);
+
+            async ValueTask<Result<RegisterAccess>> Callback(RegisterAccessRequestDto state, CancellationToken innerCt)
+            {
+                var member = await _context.Members.FirstOrDefaultAsync(r => r.PublicId == state.MemberPublicId, innerCt);
+                if (member == null) return Result<RegisterAccess>.Failure(RegisterAccessErrors.NotFound);
+
+                var hasMembership = await _context.Memberships
+                    .AnyAsync(r => r.MemberId == member.Id && r.IsActive && r.EndDate > DateTime.UtcNow, innerCt);
+
+                var entity = new RegisterAccess()
+                {
+                    MemberId = member.Id,
+                    AccessDate = DateTime.UtcNow,
+                    AllowAccess = hasMembership
+                };
+                try
+                {
+                    _context.RegisterAccesses.Add(entity);
+                    await _context.SaveChangesAsync(innerCt);
+                    return Result<RegisterAccess>.Success(entity);
+                }
+                catch (Exception e)
+                {
+                    _logger.LogError(e, "Error registering access for member {MemberId}", member.Id);
+                    return Result<RegisterAccess>.Failure(Error.Unknown);
+                }
+            }
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Error registering access for member {MemberId}", member.Id);
-            return Result<RegisterAccess>.Failure(Error.Unknown(e.Message));
+            _logger.LogError(e, "Error inesperado registrando el acceso del usuario");
+            return Result<RegisterAccess>.Failure(Error.Unknown);
         }
     }
 
@@ -67,7 +88,7 @@ public class RegisterAccessService : IRegisterAccessService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al obtener todos los registros de acceso");
-            return Result<PaginatedResult<RegisterAccess>>.Failure(Error.Unknown(ex.Message));
+            return Result<PaginatedResult<RegisterAccess>>.Failure(Error.Unknown);
         }
     }
 
@@ -88,7 +109,7 @@ public class RegisterAccessService : IRegisterAccessService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al obtener los registros de acceso por fecha");
-            return Result<PaginatedResult<RegisterAccess>>.Failure(Error.Unknown(ex.Message));
+            return Result<PaginatedResult<RegisterAccess>>.Failure(Error.Unknown);
         }
     }
 
@@ -110,7 +131,7 @@ public class RegisterAccessService : IRegisterAccessService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al obtener los registros por la ID publica del usuario");
-            return Result<PaginatedResult<RegisterAccess>>.Failure(Error.Unknown(ex.Message));
+            return Result<PaginatedResult<RegisterAccess>>.Failure(Error.Unknown);
         }
     }
 }
