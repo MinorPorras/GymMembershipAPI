@@ -36,6 +36,9 @@ public static class ServiceCollectionExtensions
         services.AddSwaggerGen();
         services.AddHealthChecks().AddNpgSql(connString!);
 
+        // In-memory cache
+        services.AddMemoryCache();
+
         return services;
     }
 

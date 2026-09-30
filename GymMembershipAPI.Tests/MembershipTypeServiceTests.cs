@@ -4,6 +4,7 @@ using GymMembershipAPI.API.Services;
 using GymMembershipAPI.Domain.Results;
 using GymMembershipAPI.Tests.Helpers;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Moq;
 
@@ -20,7 +21,8 @@ public class MembershipTypeServiceTests
     {
         //ARRANGE
         await using var context = TestDbContextFactory.Create();
-        var service = new MembershipTypeService(context, _loggerMock.Object);
+        var cache = new MemoryCache(new MemoryCacheOptions());
+        var service = new MembershipTypeService(context, _loggerMock.Object, cache);
 
         var dto = new MembershipTypeRequestDto(
             Name: "Mensual básico",
@@ -53,7 +55,8 @@ public class MembershipTypeServiceTests
     {
         //Arrange
         await using var context = TestDbContextFactory.Create();
-        var service = new MembershipTypeService(context, _loggerMock.Object);
+        var cache = new MemoryCache(new MemoryCacheOptions());
+        var service = new MembershipTypeService(context, _loggerMock.Object, cache);
         var original = new MembershipTypeRequestDto("TestName", 19.99m, 1);
         var duplicateNameDto = new MembershipTypeRequestDto("TestName", 29.99m, 12);
 
@@ -86,7 +89,8 @@ public class MembershipTypeServiceTests
     {
         // Arrange
         await using var context = TestDbContextFactory.Create();
-        var service = new MembershipTypeService(context, _loggerMock.Object);
+        var cache = new MemoryCache(new MemoryCacheOptions());
+        var service = new MembershipTypeService(context, _loggerMock.Object, cache);
         var addedEntity = new MembershipTypeRequestDto("TestName", 19.99m, 1);
         var updatedEntity = new MembershipTypeRequestDto("NewTestName", 29.99m, 2);
 
@@ -112,7 +116,8 @@ public class MembershipTypeServiceTests
     {
         //Arrange
         await using var context = TestDbContextFactory.Create();
-        var service = new MembershipTypeService(context, _loggerMock.Object);
+        var cache = new MemoryCache(new MemoryCacheOptions());
+        var service = new MembershipTypeService(context, _loggerMock.Object, cache);
         var mainEntity = new MembershipTypeRequestDto("TestName", 19.99m, 1);
         var addedEntity2 = new MembershipTypeRequestDto("TestName2", 29.99m, 1);
         var updatedEntity = new MembershipTypeRequestDto("TestName2", 29.99m, 2);
@@ -139,7 +144,8 @@ public class MembershipTypeServiceTests
     public async Task UpdateAsync_WithNonExistingPublicId_ReturnsFailure()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new MembershipTypeService(context, _loggerMock.Object);
+        var cache = new MemoryCache(new MemoryCacheOptions());
+        var service = new MembershipTypeService(context, _loggerMock.Object, cache);
         var nonExistentId = Guid.NewGuid();
         var updateDto = new MembershipTypeRequestDto("TestName", 19.99m, 1);
 
@@ -161,7 +167,8 @@ public class MembershipTypeServiceTests
     public async Task GetAll_WithDataInDb_ReturnsSuccess()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new MembershipTypeService(context, _loggerMock.Object);
+        var cache = new MemoryCache(new MemoryCacheOptions());
+        var service = new MembershipTypeService(context, _loggerMock.Object, cache);
         var dto1 = new MembershipTypeRequestDto("TestName", 19.99m, 1);
         var dto2 = new MembershipTypeRequestDto("TestName2", 29.99m, 2);
         await service.CreateAsync(dto1, CancellationToken.None);
@@ -186,7 +193,8 @@ public class MembershipTypeServiceTests
     public async Task Getall_WithEmptyDb_ReturnsSuccess()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new MembershipTypeService(context, _loggerMock.Object);
+        var cache = new MemoryCache(new MemoryCacheOptions());
+        var service = new MembershipTypeService(context, _loggerMock.Object, cache);
 
         //Act
         var result = await service.GetAllAsync(CancellationToken.None);
@@ -201,7 +209,8 @@ public class MembershipTypeServiceTests
     public async Task GetById_ValidPublicId_ReturnsSuccess()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new MembershipTypeService(context, _loggerMock.Object);
+        var cache = new MemoryCache(new MemoryCacheOptions());
+        var service = new MembershipTypeService(context, _loggerMock.Object, cache);
         var data = new MembershipTypeRequestDto("TestName", 19.99m, 1);
         var createdData = await service.CreateAsync(data, CancellationToken.None);
 
@@ -218,7 +227,8 @@ public class MembershipTypeServiceTests
     public async Task GetById_InvalidPublicId_ReturnsFailure()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new MembershipTypeService(context, _loggerMock.Object);
+        var cache = new MemoryCache(new MemoryCacheOptions());
+        var service = new MembershipTypeService(context, _loggerMock.Object, cache);
         var inexistentId = Guid.NewGuid();
 
         //Act
@@ -239,7 +249,8 @@ public class MembershipTypeServiceTests
     public async Task DeleteAsync_ValidPublicId_ReturnsSuccess()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new MembershipTypeService(context, _loggerMock.Object);
+        var cache = new MemoryCache(new MemoryCacheOptions());
+        var service = new MembershipTypeService(context, _loggerMock.Object, cache);
         var data = new MembershipTypeRequestDto("TestName", 19.99m, 1);
         var createdData = await service.CreateAsync(data, CancellationToken.None);
 
@@ -258,7 +269,8 @@ public class MembershipTypeServiceTests
     public async Task DeleteAsync_InvalidPublicId_ReturnsFailureAndNotDeleteAnything()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new MembershipTypeService(context, _loggerMock.Object);
+        var cache = new MemoryCache(new MemoryCacheOptions());
+        var service = new MembershipTypeService(context, _loggerMock.Object, cache);
         var data = new MembershipTypeRequestDto("TestName", 19.99m, 1);
         var createdData = await service.CreateAsync(data, CancellationToken.None);
         var nonExistentId = Guid.NewGuid();

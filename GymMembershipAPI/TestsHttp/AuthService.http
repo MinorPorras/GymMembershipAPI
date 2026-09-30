@@ -1,6 +1,6 @@
 ﻿@baseUrl = http://localhost:5218
 @contentType = application/json
-@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJlZTJiMzAxNS0wN2Y2LTRkYjgtYTcxYS05YmNhYjY2NmRjNmMiLCJlbWFpbCI6ImFkbWluQGd5bS5jb20iLCJyb2xlIjoiQWRtaW4iLCJqdGkiOiI1MWI5NzVkYi02MTBiLTQxNjktODhmYi03Y2JjOWI3YjBjYzkiLCJleHAiOjE3OTAyMjEzMDgsImlzcyI6Ikd5bU1lbWJlcnNoaXBBUEkiLCJhdWQiOiJHeW1NZW1iZXJzaGlwQ2xpZW50In0.iEi9No-j_6aHCTUU82efgXhy-i5SK0lergd2XfMGrCo
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJlZTJiMzAxNS0wN2Y2LTRkYjgtYTcxYS05YmNhYjY2NmRjNmMiLCJlbWFpbCI6ImFkbWluQGd5bS5jb20iLCJyb2xlIjoiQWRtaW4iLCJqdGkiOiJmNzAwYTFkNS01NWEyLTRiNmQtOWRmYi03NDdmYmQ4ZTI3ODQiLCJleHAiOjE3OTA4MTE4NzEsImlzcyI6Ikd5bU1lbWJlcnNoaXBBUEkiLCJhdWQiOiJHeW1NZW1iZXJzaGlwQ2xpZW50In0.EQBMUJQjv14a2hx9i52wNpwc5cGlaJKVz2O8YYheq2o"
 
 ###
 # Login  con clave incorrecta llegar al limit despues de 5 intentos
@@ -78,4 +78,10 @@ Authorization: Bearer {{token}}
 # Instrucción: Agrega 'throw new Exception("Prueba");' en MemberService.GetAllAsync()
 # Resultado esperado: 500 con JSON limpio
 GET {{baseUrl}}/api/member
+Authorization: Bearer {{token}}
+
+###
+# PASO 8: PRUEBA DE CACHÉ EN MEMORIA - Obtener Tipos de Membresía
+GET {{baseUrl}}/api/membershiptypes
+Content-Type: {{contentType}}
 Authorization: Bearer {{token}}
