@@ -6,6 +6,7 @@ using GymMembershipAPI.Domain.Interfaces;
 using GymMembershipAPI.Domain.Results;
 using GymMembershipAPI.Infraestructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Polly.Registry;
 
 namespace GymMembershipAPI.API.Services;
@@ -15,21 +16,32 @@ public class MemberService : IMemberService
     private readonly GymDbContext _context;
     private readonly ILogger<MemberService> _logger;
     private readonly ResiliencePipelineProvider<string> _pipelineProvider;
+    private readonly IMemoryCache _cache;
 
     public MemberService(GymDbContext context, ILogger<MemberService> logger,
-        ResiliencePipelineProvider<string> pipelineProvider)
+        ResiliencePipelineProvider<string> pipelineProvider, IMemoryCache cache)
     {
         _context = context;
         _logger = logger;
         _pipelineProvider = pipelineProvider;
+        _cache = cache;
     }
 
     public async Task<Result<Member>> GetByPublicIdAsync(Guid publicId, CancellationToken ct)
     {
-        var entity = await _context.Members.FirstOrDefaultAsync(x => x.PublicId == publicId, ct);
-        return entity == null
+        var cacheKey = $"Member_Profile_{publicId}";
+        var cachedData = await _cache.GetOrCreateAsync(cacheKey, async entry =>
+        {
+            entry.SlidingExpiration = TimeSpan.FromMinutes(5);
+            entry.Priority = CacheItemPriority.Normal;
+            _logger.LogInformation(" CACHE MISS: Obteniendo perfil del miembro {PublicId} desde la base de datos",
+                publicId);
+            return await _context.Members.Include(m => m.Memberships)
+                .FirstOrDefaultAsync(x => x.PublicId == publicId, ct);
+        });
+        return cachedData == null
             ? Result<Member>.Failure(MemberErrors.NotFound)
-            : Result<Member>.Success(entity);
+            : Result<Member>.Success(cachedData);
     }
 
     public async Task<Result<PaginatedResult<Member>>> GetAllAsync(int page, int pageSize, CancellationToken ct)
@@ -60,6 +72,7 @@ public class MemberService : IMemberService
         {
             _context.Members.Remove(entity);
             await _context.SaveChangesAsync(ct);
+            _cache.Remove($"Member_Profile_{publicId}");
             return Result.Success();
         }
         catch (Exception e)
@@ -140,6 +153,8 @@ public class MemberService : IMemberService
                 entity.Phone = dto.Phone ?? "";
 
                 await _context.SaveChangesAsync(innerCt);
+                _cache.Remove($"Member_Profile_{publicId}");
+
                 return Result<Member>.Success(entity);
             }
         }

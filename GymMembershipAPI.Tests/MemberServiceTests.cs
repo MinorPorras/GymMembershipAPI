@@ -6,6 +6,7 @@ using GymMembershipAPI.Domain.Interfaces;
 using GymMembershipAPI.Domain.Results;
 using GymMembershipAPI.Tests.Helpers;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -36,7 +37,8 @@ public class MemberServiceTests
     {
         // Arrange
         await using var context = TestDbContextFactory.Create();
-        var service = new MemberService(context, _logger.Object, _pipelineProvider);
+        var cache = new MemoryCache(new MemoryCacheOptions());
+        var service = new MemberService(context, _logger.Object, _pipelineProvider, cache);
 
         var member = new Member("Test", "test@email.com", "1111-1111");
         context.Members.Add(member);
@@ -70,7 +72,8 @@ public class MemberServiceTests
     {
         // Arrange
         await using var context = TestDbContextFactory.Create();
-        var service = new MemberService(context, _logger.Object, _pipelineProvider);
+        var cache = new MemoryCache(new MemoryCacheOptions());
+        var service = new MemberService(context, _logger.Object, _pipelineProvider, cache);
 
         // Act
         var result = await service.GetAllAsync(page: 1, pageSize: 10, CancellationToken.None);
@@ -92,7 +95,8 @@ public class MemberServiceTests
     {
         // Arrange
         await using var context = TestDbContextFactory.Create();
-        var service = new MemberService(context, _logger.Object, _pipelineProvider);
+        var cache = new MemoryCache(new MemoryCacheOptions());
+        var service = new MemberService(context, _logger.Object, _pipelineProvider, cache);
 
         for (int i = 1; i <= 15; i++)
         {
@@ -122,7 +126,8 @@ public class MemberServiceTests
     public async Task GetByPublicIdAsync_WithValidData_ReturnsSuccess()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new MemberService(context, _logger.Object, _pipelineProvider);
+        var cache = new MemoryCache(new MemoryCacheOptions());
+        var service = new MemberService(context, _logger.Object, _pipelineProvider, cache);
 
         var member = new Member("Test", "test@email.com", "1111-1111");
         context.Members.Add(member);
@@ -144,7 +149,8 @@ public class MemberServiceTests
     public async Task GetByPublicIdAsync_InvalidPublicId_ReturnsFailure()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new MemberService(context, _logger.Object, _pipelineProvider);
+        var cache = new MemoryCache(new MemoryCacheOptions());
+        var service = new MemberService(context, _logger.Object, _pipelineProvider, cache);
 
         var inexistentGuid = Guid.NewGuid();
 
@@ -165,7 +171,8 @@ public class MemberServiceTests
     public async Task CreateAsync_WithValidDto_ReturnsSuccess()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new MemberService(context, _logger.Object, _pipelineProvider);
+        var cache = new MemoryCache(new MemoryCacheOptions());
+        var service = new MemberService(context, _logger.Object, _pipelineProvider, cache);
 
         var type = new MembershipType("Basic", 9.99m, 1);
         context.MembershipTypes.Add(type);
@@ -196,7 +203,8 @@ public class MemberServiceTests
     public async Task CreateAsync_AlreadyExistentEmail_ReturnsFailure()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new MemberService(context, _logger.Object, _pipelineProvider);
+        var cache = new MemoryCache(new MemoryCacheOptions());
+        var service = new MemberService(context, _logger.Object, _pipelineProvider, cache);
 
 
         var type = new MembershipType("Basic", 9.99m, 1);
@@ -223,7 +231,8 @@ public class MemberServiceTests
     public async Task CreateAsync_InvalidMembershipTypePublicId_ReturnsFailure()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new MemberService(context, _logger.Object, _pipelineProvider);
+        var cache = new MemoryCache(new MemoryCacheOptions());
+        var service = new MemberService(context, _logger.Object, _pipelineProvider, cache);
 
         var inexistentGuid = Guid.NewGuid();
         var dto = new MemberCreateDto("testName", "test@gmail.com", "testPhone", inexistentGuid);
@@ -245,7 +254,8 @@ public class MemberServiceTests
     public async Task UpdateAsync_ValidData_ReturnsSuccess()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new MemberService(context, _logger.Object, _pipelineProvider);
+        var cache = new MemoryCache(new MemoryCacheOptions());
+        var service = new MemberService(context, _logger.Object, _pipelineProvider, cache);
 
         var existentMember = new Member("test", "test@gmail.com", "1111-1111");
         context.Members.Add(existentMember);
@@ -269,7 +279,8 @@ public class MemberServiceTests
     public async Task UpdateAsync_DuplicatedEmailFromOtherUser_ReturnsFailure()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new MemberService(context, _logger.Object, _pipelineProvider);
+        var cache = new MemoryCache(new MemoryCacheOptions());
+        var service = new MemberService(context, _logger.Object, _pipelineProvider, cache);
 
         var existentMember = new Member("test", "test@gmail.com", "1111-1111");
         context.Members.Add(existentMember);
@@ -292,7 +303,8 @@ public class MemberServiceTests
     public async Task UpdateAsync_InvalidGuid_ReturnsFailure()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new MemberService(context, _logger.Object, _pipelineProvider);
+        var cache = new MemoryCache(new MemoryCacheOptions());
+        var service = new MemberService(context, _logger.Object, _pipelineProvider, cache);
 
         var existentGuid = Guid.NewGuid();
         var updatedMember = new MemberUpdateDto("test", "test@gmail.com", "1111-1111");
@@ -314,8 +326,8 @@ public class MemberServiceTests
     public async Task DeleteAsync_ValidPublicId_ReturnsSuccess()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new MemberService(context, _logger.Object, _pipelineProvider);
-
+        var cache = new MemoryCache(new MemoryCacheOptions());
+        var service = new MemberService(context, _logger.Object, _pipelineProvider, cache);
 
         var member = new Member("test", "test@gmail.com", "1111-1111");
         context.Members.Add(member);
@@ -334,7 +346,8 @@ public class MemberServiceTests
     public async Task DeleteAsync_InvalidGuid_ReturnsFailure()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new MemberService(context, _logger.Object, _pipelineProvider);
+        var cache = new MemoryCache(new MemoryCacheOptions());
+        var service = new MemberService(context, _logger.Object, _pipelineProvider, cache);
 
         var member = new Member("test", "test@gmail.com", "1111-1111");
         context.Members.Add(member);

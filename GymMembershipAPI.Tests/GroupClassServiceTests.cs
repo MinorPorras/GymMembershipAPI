@@ -4,6 +4,7 @@ using GymMembershipAPI.API.Services;
 using GymMembershipAPI.Domain.Entities;
 using GymMembershipAPI.Domain.Results;
 using GymMembershipAPI.Tests.Helpers;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -32,7 +33,8 @@ public class GroupClassServiceTests
     public async Task GetByPublicIdAsync_ValidData_ReturnsSuccess()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new GroupClassService(_logger.Object, context, _pipelineProvider);
+        var cache = new MemoryCache(new MemoryCacheOptions());
+        var service = new GroupClassService(_logger.Object, context, _pipelineProvider, cache);
 
         var groupClass = new GroupClass()
         {
@@ -57,7 +59,8 @@ public class GroupClassServiceTests
     public async Task GetByPublicIdAsync_InvalidPublicId_ReturnsFailure()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new GroupClassService(_logger.Object, context, _pipelineProvider);
+        var cache = new MemoryCache(new MemoryCacheOptions());
+        var service = new GroupClassService(_logger.Object, context, _pipelineProvider, cache);
         var inexistentGuid = Guid.NewGuid();
 
         //Act
@@ -73,7 +76,8 @@ public class GroupClassServiceTests
     public async Task GetAllAsync_WithData_ReturnsSuccessAndList()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new GroupClassService(_logger.Object, context, _pipelineProvider);
+        var cache = new MemoryCache(new MemoryCacheOptions());
+        var service = new GroupClassService(_logger.Object, context, _pipelineProvider, cache);
 
         var groupClass = new GroupClass()
         {
@@ -99,7 +103,8 @@ public class GroupClassServiceTests
     public async Task GetAllAsync_EmptyContext_ReturnsSuccess()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new GroupClassService(_logger.Object, context, _pipelineProvider);
+        var cache = new MemoryCache(new MemoryCacheOptions());
+        var service = new GroupClassService(_logger.Object, context, _pipelineProvider, cache);
 
         //Act
         var result = await service.GetAllAsync(CancellationToken.None);
@@ -114,7 +119,8 @@ public class GroupClassServiceTests
     public async Task GetByDateAsync_ReturnsSuccess()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new GroupClassService(_logger.Object, context, _pipelineProvider);
+        var cache = new MemoryCache(new MemoryCacheOptions());
+        var service = new GroupClassService(_logger.Object, context, _pipelineProvider, cache);
 
         var searchedDate = DateTime.UtcNow;
 
@@ -154,7 +160,8 @@ public class GroupClassServiceTests
     public async Task CreateAsync_ValidData_ReturnsSuccess()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new GroupClassService(_logger.Object, context, _pipelineProvider);
+        var cache = new MemoryCache(new MemoryCacheOptions());
+        var service = new GroupClassService(_logger.Object, context, _pipelineProvider, cache);
         var dto = new GroupClassRequestDto("test", "testInstructor", DateTime.UtcNow.AddDays(3), 1);
 
         //Act
@@ -173,7 +180,8 @@ public class GroupClassServiceTests
     public async Task CreateAsync_DuplicatedName_ReturnsFailure()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new GroupClassService(_logger.Object, context, _pipelineProvider);
+        var cache = new MemoryCache(new MemoryCacheOptions());
+        var service = new GroupClassService(_logger.Object, context, _pipelineProvider, cache);
 
         var duplicatedName = "Test Group";
         var groupClass = new GroupClass()
@@ -204,7 +212,8 @@ public class GroupClassServiceTests
     public async Task CreateAsync_DateOlderThanToday_ReturnsFailure()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new GroupClassService(_logger.Object, context, _pipelineProvider);
+        var cache = new MemoryCache(new MemoryCacheOptions());
+        var service = new GroupClassService(_logger.Object, context, _pipelineProvider, cache);
         var dto = new GroupClassRequestDto("test", "testInstructor", DateTime.UtcNow.AddDays(-1), 1);
 
         //Act
@@ -224,7 +233,8 @@ public class GroupClassServiceTests
     public async Task UpdateAsync_ValidData_ReturnsSuccess()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new GroupClassService(_logger.Object, context, _pipelineProvider);
+        var cache = new MemoryCache(new MemoryCacheOptions());
+        var service = new GroupClassService(_logger.Object, context, _pipelineProvider, cache);
 
         var originalClass = new GroupClass()
         {
@@ -254,7 +264,8 @@ public class GroupClassServiceTests
     public async Task UpdateAsync_InexistentPublicId_ReturnsFailure()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new GroupClassService(_logger.Object, context, _pipelineProvider);
+        var cache = new MemoryCache(new MemoryCacheOptions());
+        var service = new GroupClassService(_logger.Object, context, _pipelineProvider, cache);
 
         var inexistentPublicId = Guid.NewGuid();
         var dto = new GroupClassRequestDto("test", "testInstructor", DateTime.UtcNow.AddDays(3), 1);
@@ -276,7 +287,8 @@ public class GroupClassServiceTests
     public async Task DeleteAsync_ValidData_ReturnSuccess()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new GroupClassService(_logger.Object, context, _pipelineProvider);
+        var cache = new MemoryCache(new MemoryCacheOptions());
+        var service = new GroupClassService(_logger.Object, context, _pipelineProvider, cache);
 
         var originalClass = new GroupClass()
         {
@@ -302,7 +314,8 @@ public class GroupClassServiceTests
     public async Task DeleteAsync_InexistentPublicId_ReturnsSuccess()
     {
         await using var context = TestDbContextFactory.Create();
-        var service = new GroupClassService(_logger.Object, context, _pipelineProvider);
+        var cache = new MemoryCache(new MemoryCacheOptions());
+        var service = new GroupClassService(_logger.Object, context, _pipelineProvider, cache);
 
         var originalClass = new GroupClass()
         {

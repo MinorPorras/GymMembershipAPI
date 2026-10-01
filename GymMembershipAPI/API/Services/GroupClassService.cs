@@ -5,6 +5,7 @@ using GymMembershipAPI.Domain.Interfaces;
 using GymMembershipAPI.Domain.Results;
 using GymMembershipAPI.Infraestructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Polly.Registry;
 
 namespace GymMembershipAPI.API.Services;
@@ -14,13 +15,15 @@ public class GroupClassService : IGroupClassService
     private readonly ILogger<GroupClassService> _logger;
     private readonly GymDbContext _context;
     private readonly ResiliencePipelineProvider<string> _pipelineProvider;
+    private readonly IMemoryCache _cache;
 
     public GroupClassService(ILogger<GroupClassService> logger, GymDbContext context,
-        ResiliencePipelineProvider<string> pipelineProvider)
+        ResiliencePipelineProvider<string> pipelineProvider, IMemoryCache cache)
     {
         _logger = logger;
         _context = context;
         _pipelineProvider = pipelineProvider;
+        _cache = cache;
     }
 
     private static Result IsValidDto(GroupClassRequestDto dto, Guid? excludePubliId = null) =>
@@ -38,8 +41,15 @@ public class GroupClassService : IGroupClassService
 
     public async Task<Result<List<GroupClass>>> GetAllAsync(CancellationToken ct)
     {
-        var list = await _context.GroupClasses.ToListAsync(ct);
-        return Result<List<GroupClass>>.Success(list);
+        const string cacheKey = "GroupClasses_All";
+        var cachedData = await _cache.GetOrCreateAsync(cacheKey, async entry =>
+        {
+            entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(15);
+            entry.SlidingExpiration = TimeSpan.FromMinutes(5);
+            _logger.LogInformation(" CACHE MISS: Obteniendo clases desde la base de datos");
+            return await _context.GroupClasses.OrderBy(c => c.DateHour).ToListAsync(ct);
+        });
+        return Result<List<GroupClass>>.Success(cachedData!);
     }
 
     public async Task<Result<List<GroupClass>>> GetByDateAsync(DateTime date, CancellationToken ct)
@@ -73,6 +83,7 @@ public class GroupClassService : IGroupClassService
                     {
                         _context.GroupClasses.Add(entity);
                         await _context.SaveChangesAsync(innerCt);
+                        _cache.Remove("GroupClasses_All");
                         return Result<GroupClass>.Success(entity);
                     }
                     catch (Exception e)
@@ -98,6 +109,7 @@ public class GroupClassService : IGroupClassService
         {
             _context.GroupClasses.Remove(existingClass);
             await _context.SaveChangesAsync(ct);
+            _cache.Remove("GroupClasses_All");
             return Result.Success();
         }
         catch (Exception e)
@@ -144,6 +156,7 @@ public class GroupClassService : IGroupClassService
                         existingClass.MaxMembers = s.Dto.MaxMembers;
 
                         await _context.SaveChangesAsync(innerCt);
+                        _cache.Remove("GroupClasses_All");
                         return Result<GroupClass>.Success(existingClass);
                     }
                     catch (Exception e)
