@@ -5,12 +5,13 @@ using GymMembershipAPI.API.Mappers;
 using GymMembershipAPI.Domain.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace GymMembershipAPI.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "Admin, Staff")]
+[Authorize]
 public class RegisterAccessController : ControllerBase
 {
     private readonly IRegisterAccessService _service;
@@ -22,6 +23,8 @@ public class RegisterAccessController : ControllerBase
 
 
     [HttpPost]
+    [Authorize(Roles = "Admin, Staff")]
+    [EnableRateLimiting("MediumLimit")]
     public async Task<IActionResult> Register([FromBody] RegisterAccessRequestDto dto, CancellationToken ct)
     {
         var result = await _service.RegisterAsync(dto, ct);
@@ -31,6 +34,8 @@ public class RegisterAccessController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Roles = "Admin, Staff")]
+    [EnableRateLimiting("MediumLimit")]
     public async Task<IActionResult> GetAll(CancellationToken ct, [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10)
     {
@@ -40,6 +45,8 @@ public class RegisterAccessController : ControllerBase
     }
 
     [HttpGet("{publicId:guid}")]
+    [Authorize(Roles = "Admin, Staff")]
+    [EnableRateLimiting("LightLimit")]
     public async Task<IActionResult> GetByPublicId([FromRoute] Guid publicId, CancellationToken ct)
     {
         var result = await _service.GetByPublicIdAsync(publicId, ct);
@@ -49,6 +56,8 @@ public class RegisterAccessController : ControllerBase
     }
 
     [HttpGet("member/{memberPublicId:guid}")]
+    [Authorize(Roles = "Admin, Staff")]
+    [EnableRateLimiting("MediumLimit")]
     public async Task<IActionResult> GetByMemberPublicId([FromRoute] Guid memberPublicId, CancellationToken ct,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10)
@@ -59,6 +68,8 @@ public class RegisterAccessController : ControllerBase
     }
 
     [HttpGet("date/{date:datetime}")]
+    [Authorize(Roles = "Admin, Staff")]
+    [EnableRateLimiting("MediumLimit")]
     public async Task<IActionResult> GetByDate([FromRoute] DateTime date, CancellationToken ct,
         [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
     {
@@ -68,21 +79,14 @@ public class RegisterAccessController : ControllerBase
     }
 
     [HttpGet("me/registeredAccesses")]
-    [Authorize]
+    [EnableRateLimiting("MediumLimit")]
     public async Task<IActionResult> GetMyAccesses(CancellationToken ct, int page = 1, int pageSize = 10)
     {
-        var memberPublicId = GetMemberPublicIdFromToken();
+        var memberPublicId = User.GetMemberPublicIdFromToken();
         if (memberPublicId == null) return Forbid("Solo un miembro puede ver sus propios registros de acceso.");
 
         var result = await _service.GetByMemberPublicIdAsync(memberPublicId.Value, page, pageSize, ct);
         var response = result.Value.MapTo(RegisterAccessMapper.ToResponseDtos);
         return Ok(response);
-    }
-
-    // Helpers
-    private Guid? GetMemberPublicIdFromToken()
-    {
-        var claim = User.FindFirst("member_public_id")?.Value;
-        return string.IsNullOrEmpty(claim) ? null : Guid.Parse(claim);
     }
 }

@@ -2,12 +2,12 @@
 using GymMembershipAPI.Domain.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace GymMembershipAPI.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize] // Todo el controller protegido
 public class UserController : ControllerBase
 {
     private readonly IUserService _userService;
@@ -19,7 +19,9 @@ public class UserController : ControllerBase
 
     // Hereda [Authorize] automáticamente
     [HttpGet("{userPublicId:guid}")]
-    public async Task<IActionResult> GetyPublicIdAsync(Guid userPublicId, CancellationToken ct)
+    [Authorize]
+    [EnableRateLimiting("LightLimit")]
+    public async Task<IActionResult> GetByPublicIdAsync(Guid userPublicId, CancellationToken ct)
     {
         var result = await _userService.GetByPublicIdAsync(userPublicId, ct);
         if (result.IsFailure) return NotFound(new { message = result.Error.Message });
@@ -33,16 +35,21 @@ public class UserController : ControllerBase
     }
 
     [HttpPost]
-    [AllowAnonymous] // Excepción: Público
+    [AllowAnonymous]
+    [EnableRateLimiting("HeavyLimit")]
     public async Task<IActionResult> CreateAsync([FromBody] UserCreateRequestDto dto, CancellationToken ct)
     {
         var result = await _userService.CreateAsync(dto, ct);
         if (result.IsFailure) return BadRequest(new { message = result.Error.Message });
-        return Ok(new
-        {
-            publicId = result.Value.PublicId,
-            email = result.Value.Email,
-            role = result.Value.Role.ToString()
-        });
+        return CreatedAtAction(
+            "GetByPublicId",
+            new { userPublicId = result.Value.PublicId },
+            new
+            {
+                publicId = result.Value.PublicId,
+                email = result.Value.Email,
+                role = result.Value.Role.ToString()
+            }
+        );
     }
 }

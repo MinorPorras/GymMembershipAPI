@@ -6,6 +6,7 @@ using GymMembershipAPI.Domain.Interfaces;
 using GymMembershipAPI.Domain.Results;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace GymMembershipAPI.API.Controllers;
 
@@ -23,7 +24,7 @@ public class MembershipTypeController : ControllerBase
     // GET
 
     [HttpGet]
-    [AllowAnonymous]
+    [EnableRateLimiting("LightLimit")]
     public async Task<IActionResult> GetAll(CancellationToken ct)
     {
         var result = await _service.GetAllAsync(ct);
@@ -33,7 +34,7 @@ public class MembershipTypeController : ControllerBase
     }
 
     [HttpGet("{publicId:guid}")]
-    [AllowAnonymous]
+    [EnableRateLimiting("LightLimit")]
     public async Task<IActionResult> GetByPublicId([FromRoute] Guid publicId, CancellationToken ct)
     {
         var result = await _service.GetByPublicIdAsync(publicId, ct);
@@ -44,7 +45,9 @@ public class MembershipTypeController : ControllerBase
 
     // POST
     [HttpPost]
-    public async Task<IActionResult> CreateMembershipType([FromBody] MembershipTypeRequestDto newTypeRequestDto, CancellationToken ct)
+    [Authorize(Roles = "Admin, Staff")]
+    [EnableRateLimiting("HeavyLimit")]
+    public async Task<IActionResult> Create([FromBody] MembershipTypeRequestDto newTypeRequestDto, CancellationToken ct)
     {
         var result = await _service.CreateAsync(newTypeRequestDto, ct);
         if (result.IsFailure) return BadRequest(new { message = result.Error.Message });
@@ -54,12 +57,14 @@ public class MembershipTypeController : ControllerBase
 
     // PATCH
     [HttpPut("{publicId:guid}")]
-    public async Task<IActionResult> UpdateMembershipType([FromRoute] Guid publicId,
+    [Authorize(Roles = "Admin, Staff")]
+    [EnableRateLimiting("HeavyLimit")]
+    public async Task<IActionResult> Update([FromRoute] Guid publicId,
         [FromBody] MembershipTypeRequestDto updatedTypeDto, CancellationToken ct)
     {
         var result = await _service.UpdateAsync(publicId, updatedTypeDto, ct);
         if (result.IsFailure)
-            return result.Error.Code == "MembershipType.NotFound"
+            return result.Error.Code == MembershipTypeErrors.NotFound.Code
                 ? NotFound(new { message = result.Error.Message })
                 : BadRequest(new { message = result.Error.Message });
         var response = MembershipTypeMapper.ToResponseDto(result.Value);
@@ -68,7 +73,9 @@ public class MembershipTypeController : ControllerBase
 
     //DELETE
     [HttpDelete("{publicId:guid}")]
-    public async Task<IActionResult> DeleteMembershipType([FromRoute] Guid publicId, CancellationToken ct)
+    [Authorize(Roles = "Admin, Staff")]
+    [EnableRateLimiting("HeavyLimit")]
+    public async Task<IActionResult> Delete([FromRoute] Guid publicId, CancellationToken ct)
     {
         var result = await _service.DeleteAsync(publicId, ct);
         if (result.IsFailure) return NotFound(new { message = result.Error.Message });

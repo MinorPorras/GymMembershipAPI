@@ -4,6 +4,7 @@ using GymMembershipAPI.Domain.Interfaces;
 using GymMembershipAPI.Domain.Results;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace GymMembershipAPI.API.Controllers;
 
@@ -22,6 +23,7 @@ public class GroupClassController : ControllerBase
     // GET
     [HttpGet]
     [AllowAnonymous]
+    [EnableRateLimiting("MediumLimit")]
     public async Task<IActionResult> GetAll(CancellationToken ct)
     {
         var result = await _service.GetAllAsync(ct);
@@ -32,6 +34,7 @@ public class GroupClassController : ControllerBase
 
     [HttpGet("{PublicId:guid}")]
     [AllowAnonymous]
+    [EnableRateLimiting("LightLimit")]
     public async Task<IActionResult> GetByPublicId([FromRoute] Guid publicId, CancellationToken ct)
     {
         var result = await _service.GetByPublicIdAsync(publicId, ct);
@@ -42,6 +45,7 @@ public class GroupClassController : ControllerBase
 
     [HttpGet("date/{date:datetime}")]
     [AllowAnonymous]
+    [EnableRateLimiting("MediumLimit")]
     public async Task<IActionResult> GetByDate([FromRoute] DateTime date, CancellationToken ct)
     {
         var result = await _service.GetByDateAsync(date, ct);
@@ -53,6 +57,7 @@ public class GroupClassController : ControllerBase
     //POST
     [HttpPost]
     [Authorize(Roles = "Admin, Staff")]
+    [EnableRateLimiting("HeavyLimit")]
     public async Task<IActionResult> Create([FromBody] GroupClassRequestDto dto, CancellationToken ct)
     {
         var result = await _service.CreateAsync(dto, ct);
@@ -69,7 +74,9 @@ public class GroupClassController : ControllerBase
     //PUT
     [HttpPut("{publicId:guid}")]
     [Authorize(Roles = "Admin, Staff")]
-    public async Task<IActionResult> Update([FromRoute] Guid publicId, [FromBody] GroupClassRequestDto dto, CancellationToken ct)
+    [EnableRateLimiting("HeavyLimit")]
+    public async Task<IActionResult> Update([FromRoute] Guid publicId, [FromBody] GroupClassRequestDto dto,
+        CancellationToken ct)
     {
         var result = await _service.UpdateAsync(publicId, dto, ct);
         if (result.IsFailure)
@@ -85,6 +92,7 @@ public class GroupClassController : ControllerBase
     //DELETE
     [HttpDelete("{publicId:guid}")]
     [Authorize(Roles = "Admin, Staff")]
+    [EnableRateLimiting("HeavyLimit")]
     public async Task<IActionResult> Delete([FromRoute] Guid publicId, CancellationToken ct)
     {
         var result = await _service.DeleteAsync(publicId, ct);

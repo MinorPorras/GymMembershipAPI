@@ -1,15 +1,16 @@
-﻿using GymMembershipAPI.API.DTOs.Members;
-using GymMembershipAPI.API.DTOs.Membership;
+﻿using GymMembershipAPI.API.DTOs.Membership;
+using GymMembershipAPI.API.Extensions;
 using GymMembershipAPI.API.Mappers;
 using GymMembershipAPI.Domain.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace GymMembershipAPI.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "Admin, Staff")]
+[Authorize]
 public class MembershipController : ControllerBase
 {
     private readonly IMembershipService _service;
@@ -21,26 +22,32 @@ public class MembershipController : ControllerBase
 
 
     [HttpGet("{publicId:guid}")]
+    [Authorize(Roles = "Admin, Staff")]
+    [EnableRateLimiting("LightLimit")]
     public async Task<IActionResult> GetByPublicId([FromRoute] Guid publicId, CancellationToken ct)
     {
         var result = await _service.GetByPublicIdAsync(publicId, ct);
         if (result.IsFailure)
-            return NotFound(result.Error.Message);
+            return NotFound(new { message = result.Error.Message });
         var response = MembershipMapper.ToResponseDto(result.Value);
         return Ok(response);
     }
 
-    [HttpGet("member/{memberPubliId:guid}/active")]
-    public async Task<IActionResult> GetActiveByMember([FromRoute] Guid memberPubliId, CancellationToken ct)
+    [HttpGet("member/{memberPublicId:guid}/active")]
+    [Authorize(Roles = "Admin, Staff")]
+    [EnableRateLimiting("MediumLimit")]
+    public async Task<IActionResult> GetActiveByMember([FromRoute] Guid memberPublicId, CancellationToken ct)
     {
-        var result = await _service.GetActiveByMemberPublicId(memberPubliId, ct);
+        var result = await _service.GetActiveByMemberPublicId(memberPublicId, ct);
         if (result.IsFailure)
-            return NotFound(result.Error.Message);
+            return NotFound(new { message = result.Error.Message });
         var response = MembershipMapper.ToResponseDtos(result.Value);
         return Ok(response);
     }
 
     [HttpGet("member/{memberPublicId:guid}/history")]
+    [Authorize(Roles = "Admin, Staff")]
+    [EnableRateLimiting("MediumLimit")]
     public async Task<IActionResult> GetHistoryByMember([FromRoute] Guid memberPublicId, CancellationToken ct)
     {
         var result = await _service.GetHistoryByMemberPublicIdAsync(memberPublicId, ct);
@@ -51,10 +58,10 @@ public class MembershipController : ControllerBase
     }
 
     [HttpGet("me/active")]
-    [Authorize]
+    [EnableRateLimiting("LightLimit")]
     public async Task<IActionResult> GetMyActiveMembership(CancellationToken ct)
     {
-        var memberPublicId = GetMemberPublicIdFromToken();
+        var memberPublicId = User.GetMemberPublicIdFromToken();
         if (memberPublicId == null)
             return Forbid("Solo miembros puede consultar su propia membresía aquí.");
 
@@ -66,10 +73,10 @@ public class MembershipController : ControllerBase
     }
 
     [HttpGet("me/history")]
-    [Authorize]
+    [EnableRateLimiting("MediumLimit")]
     public async Task<IActionResult> GetMyMembershipHistory(CancellationToken ct)
     {
-        var memberPublicId = GetMemberPublicIdFromToken();
+        var memberPublicId = User.GetMemberPublicIdFromToken();
         if (memberPublicId == null)
             return Forbid("Solo miembros puede consultar su propio historial de membresías aquí");
 
@@ -82,10 +89,12 @@ public class MembershipController : ControllerBase
 
     //POST
     [HttpPost]
+    [Authorize(Roles = "Admin, Staff")]
+    [EnableRateLimiting("HeavyLimit")]
     public async Task<IActionResult> Create([FromBody] MembershipRequestDto dto, CancellationToken ct)
     {
         var result = await _service.CreateAsync(dto, ct);
-        if (result.IsFailure) return BadRequest(result.Error.Message);
+        if (result.IsFailure) return BadRequest(new { message = result.Error.Message });
         var response = MembershipMapper.ToResponseDto(result.Value);
         return CreatedAtAction(
             nameof(GetByPublicId),
@@ -95,18 +104,13 @@ public class MembershipController : ControllerBase
     }
 
     //DELETE
-    [HttpDelete("{membershipPublicId}/cancel")]
+    [HttpDelete("{membershipPublicId:guid}/cancel")]
+    [Authorize(Roles = "Admin, Staff")]
+    [EnableRateLimiting("HeavyLimit")]
     public async Task<IActionResult> Cancel([FromRoute] Guid membershipPublicId, CancellationToken ct)
     {
         var result = await _service.CancelAsync(membershipPublicId, ct);
         if (result.IsFailure) return NotFound(new { message = result.Error.Message });
         return NoContent();
-    }
-
-    // Helpers
-    private Guid? GetMemberPublicIdFromToken()
-    {
-        var claim = User.FindFirst("member_public_id")?.Value;
-        return string.IsNullOrEmpty(claim) ? null : Guid.Parse(claim);
     }
 }

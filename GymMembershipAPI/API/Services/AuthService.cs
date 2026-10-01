@@ -34,7 +34,7 @@ public class AuthService : IAuthService
         var pipeline = _pipelineProvider.GetPipeline("db-pipeline");
         try
         {
-            var user = await pipeline.ExecuteAsync<User>(async innerCt =>
+            var user = await pipeline.ExecuteAsync<User?>(async innerCt =>
             {
                 return (await _context.Users
                     .Include(u => u.Member)

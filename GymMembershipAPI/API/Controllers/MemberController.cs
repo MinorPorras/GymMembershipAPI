@@ -2,12 +2,11 @@
 using GymMembershipAPI.API.DTOs.Shared;
 using GymMembershipAPI.API.Extensions;
 using GymMembershipAPI.API.Mappers;
-using GymMembershipAPI.API.Services;
-using GymMembershipAPI.Domain.Entities;
 using GymMembershipAPI.Domain.Interfaces;
 using GymMembershipAPI.Domain.Results;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace GymMembershipAPI.API.Controllers;
 
@@ -26,6 +25,7 @@ public class MemberController : ControllerBase
     // GET
     [HttpGet]
     [Authorize(Roles = "Admin, Staff")]
+    [EnableRateLimiting("MediumLimit")]
     public async Task<IActionResult> GetAll(
         CancellationToken ct,
         [FromQuery] int page = 1,
@@ -41,6 +41,7 @@ public class MemberController : ControllerBase
     }
 
     [HttpGet("{publicId}")]
+    [EnableRateLimiting("LightLimit")]
     public async Task<IActionResult> GetByPublicId(Guid publicId, CancellationToken ct)
     {
         var result = await _service.GetByPublicIdAsync(publicId, ct);
@@ -52,6 +53,7 @@ public class MemberController : ControllerBase
     //POST
     [HttpPost]
     [Authorize(Roles = "Admin, Staff")]
+    [EnableRateLimiting("HeavyLimit")]
     public async Task<IActionResult> CreateAsync([FromBody] MemberCreateDto dto, CancellationToken ct)
     {
         var result = await _service.CreateAsync(dto, ct);
@@ -66,6 +68,7 @@ public class MemberController : ControllerBase
     // PUT
     [HttpPut("{publicId}")]
     [Authorize(Roles = "Admin, Staff")]
+    [EnableRateLimiting("HeavyLimit")]
     public async Task<IActionResult> UpdateAsync([FromRoute] Guid publicId, [FromBody] MemberUpdateDto dto,
         CancellationToken ct)
     {
@@ -82,6 +85,7 @@ public class MemberController : ControllerBase
     //DELETE
     [HttpDelete(("{publicId}"))]
     [Authorize(Roles = "Admin, Staff")]
+    [EnableRateLimiting("HeavyLimit")]
     public async Task<IActionResult> DeleteAsync([FromRoute] Guid publicId, CancellationToken ct)
     {
         var result = await _service.DeleteAsync(publicId, ct);
