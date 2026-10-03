@@ -6,4 +6,6 @@ namespace GymMembershipAPI.Domain.Interfaces;
 public interface IAuthService
 {
     Task<Result<LoginResponseDto>> LoginAsync(LoginRequestDto dto, CancellationToken ct);
+    Task<Result<LoginResponseDto>> RefreshTokenAsync(string refreshToken, CancellationToken ct);
+    Task<Result> LogoutAsync(string refreshToken, CancellationToken ct);
 }

@@ -1,5 +1,6 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using GymMembershipAPI.API.DTOs.Auth;
 using GymMembershipAPI.Domain.Entities;
@@ -46,14 +47,31 @@ public class AuthService : IAuthService
 
             // Generar Token JWT
             var token = GenerateJwtToken(user);
+            var refreshToken = GenerateRefreshToken();
+
             var expirationMinutes = Convert.ToDouble(_configuration["Jwt:ExpirationInMinutes"]);
-            var expiresIn = DateTime.UtcNow.AddMinutes(expirationMinutes);
+            var accessTokenExpiresIn = DateTime.UtcNow.AddMinutes(expirationMinutes);
+
+            var refreshTokenExpiresAt = DateTime.UtcNow.AddDays(7);
+
+            var refreshTokenEntity = new RefreshToken
+            {
+                UserId = user.Id,
+                Token = refreshToken,
+                ExpiresAt = refreshTokenExpiresAt,
+                CreatedAt = DateTime.UtcNow,
+            };
+
+            await _context.RefreshTokens.AddAsync(refreshTokenEntity, ct);
+            await _context.SaveChangesAsync(ct);
 
             var response = new LoginResponseDto(
                 Token: token,
-                ExpiresIn: expiresIn,
+                ExpiresIn: accessTokenExpiresIn,
                 Role: user.Role.ToString(),
-                MemberPublicId: user.Member?.PublicId
+                MemberPublicId: user.Member?.PublicId,
+                RefreshToken: refreshToken,
+                RefreshTokenExpiration: refreshTokenExpiresAt
             );
 
             return Result<LoginResponseDto>.Success(response);
@@ -61,9 +79,106 @@ public class AuthService : IAuthService
         catch (Exception e)
         {
             _logger.LogError(e, "Fallo crítico tras agotar reintentos en Login");
-            
-            return Result<LoginResponseDto>.Failure(Error.Unknown); 
+
+            return Result<LoginResponseDto>.Failure(Error.Unknown);
         }
+    }
+
+    public async Task<Result<LoginResponseDto>> RefreshTokenAsync(string refreshToken, CancellationToken ct)
+    {
+        try
+        {
+            var storedToken = await _context.RefreshTokens
+                .Include(t => t.User)
+                .ThenInclude(user => user.Member)
+                .FirstOrDefaultAsync(t => t.Token == refreshToken, ct);
+            if (storedToken is not { IsActive: true })
+                return Result<LoginResponseDto>.Failure(AuthErrors.InvalidRefreshToken);
+
+            if (storedToken.ReplacedByRefreshTokenId.HasValue)
+            {
+                _logger.LogWarning(
+                    "ANOMALÍA DETECTADA: Reuso del refresh token para el usuario {UserId}. Revocando toda la sesión",
+                    storedToken.UserId);
+                var allUserTokens = await _context.RefreshTokens
+                    .Where(t => t.UserId == storedToken.UserId && t.RevokedAt == null)
+                    .ToListAsync(ct);
+
+                foreach (var token in allUserTokens)
+                    token.RevokedAt = DateTime.UtcNow;
+
+                await _context.SaveChangesAsync(ct);
+                return Result<LoginResponseDto>.Failure(AuthErrors.InvalidRefreshToken);
+            }
+
+            var newRefreshTokenString = GenerateRefreshToken();
+            var newRefreshTokenExpiredAt = DateTime.UtcNow.AddDays(7);
+
+            var newRefreshTokenEntity = new RefreshToken
+            {
+                UserId = storedToken.UserId,
+                Token = newRefreshTokenString,
+                ExpiresAt = newRefreshTokenExpiredAt,
+                CreatedAt = DateTime.UtcNow,
+            };
+
+            storedToken.RevokedAt = DateTime.UtcNow;
+            storedToken.ReplacedByRefreshTokenId = newRefreshTokenEntity.Id;
+
+            var newAccessToken = GenerateJwtToken(storedToken.User);
+            var accessTokenExpiresIn =
+                DateTime.UtcNow.AddMinutes(Convert.ToDouble(_configuration["Jwt:ExpirationInMinutes"]));
+
+            await _context.RefreshTokens.AddAsync(newRefreshTokenEntity, ct);
+            await _context.SaveChangesAsync(ct);
+
+            var response = new LoginResponseDto(
+                Token: newAccessToken,
+                ExpiresIn: accessTokenExpiresIn,
+                Role: storedToken.User.Role.ToString(),
+                MemberPublicId: storedToken.User.Member?.PublicId,
+                RefreshToken: newRefreshTokenString,
+                RefreshTokenExpiration: newRefreshTokenExpiredAt
+            );
+
+            return Result<LoginResponseDto>.Success(response);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Fallo crítico en RefreshTokenAsync");
+            return Result<LoginResponseDto>.Failure(Error.Unknown);
+        }
+    }
+
+    public async Task<Result> LogoutAsync(string refreshToken, CancellationToken ct)
+    {
+        try
+        {
+            var storedToken = await _context.RefreshTokens
+                .FirstOrDefaultAsync(t => t.Token == refreshToken, ct);
+
+            if (storedToken != null && storedToken.IsActive)
+            {
+                storedToken.RevokedAt = DateTime.UtcNow;
+                await _context.SaveChangesAsync(ct);
+                _logger.LogInformation("Usuario {UserId} cerró sesión exitosamente.",  storedToken.UserId);
+            }
+
+            return Result.Success();
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Fallo crítico en LogoutAsync");
+            return Result.Failure(Error.Unknown);
+        }
+    }
+
+    private static string GenerateRefreshToken()
+    {
+        var randomNumber = new byte[64];
+        using var rng = RandomNumberGenerator.Create();
+        rng.GetBytes(randomNumber);
+        return Convert.ToBase64String(randomNumber);
     }
 
     private string GenerateJwtToken(User user)

@@ -16,4 +16,9 @@ public class AuthErrors
         "AuthErrors.UserAlreadyExists",
         "Ya existe un usuario registrado con este correo electrónico."
     );
+
+    public static readonly Error InvalidRefreshToken = new(
+        "Auth.InvalidRefreshToken",
+        "El token de refresco es inválido o ha expirado."
+    );
 }

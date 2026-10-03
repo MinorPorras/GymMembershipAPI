@@ -1,0 +1,42 @@
+﻿@baseUrl = http://localhost:5218
+@contentType = application/json
+@token = Xb1a3gl4CJAWSykAiCR25vd+rzR8T8J6NtgXAt54pizLjvUzStwYShjB/+c5jIZMt3EG733W5+7U0rVqHrA5Jg==
+@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJlZTJiMzAxNS0wN2Y2LTRkYjgtYTcxYS05YmNhYjY2NmRjNmMiLCJlbWFpbCI6ImFkbWluQGd5bS5jb20iLCJyb2xlIjoiQWRtaW4iLCJqdGkiOiJiNTc5YWNmMC0xYjkzLTRmODctYmQwNy1mZWY1MmNhNmY3ZDAiLCJleHAiOjE3OTEwMDUyNjYsImlzcyI6Ikd5bU1lbWJlcnNoaXBBUEkiLCJhdWQiOiJHeW1NZW1iZXJzaGlwQ2xpZW50In0.Vy40QFwNRSWakMdCLXaDWylwZLfvD864uVbw-kC4npY
+###
+# PASO A: Hacer Login (Copia el "refreshToken" de la respuesta)
+POST {{baseUrl}}/api/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "admin@gym.com",
+  "password": "gymDbPassword2003!"
+}
+
+###
+# PASO B: Usar el Refresh Token para obtener un NUEVO Access Token
+POST {{baseUrl}}/api/auth/refresh
+Content-Type: {{contentType}}
+
+{
+  "refreshToken": "{{token}}"
+}
+
+###
+# PASO C: Intentar USAR DE NUEVO el mismo Refresh Token viejo (Prueba de Anomalía)
+POST {{baseUrl}}/api/auth/refresh
+Content-Type: {{contentType}}
+
+{
+  "refreshToken": "{{token}}"
+}
+
+###
+# PASO D: Logout Real
+# (Haz login de nuevo, obtén un refresh token fresco, y úsalo aquí)
+POST {{baseUrl}}/api/auth/logout
+Content-Type: {{contentType}}
+Authorization: Bearer {{accessToken}}
+
+{
+  "refreshToken": "{{token}}"
+}

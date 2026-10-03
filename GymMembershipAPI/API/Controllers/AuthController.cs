@@ -1,5 +1,6 @@
 ﻿using GymMembershipAPI.API.DTOs.Auth;
 using GymMembershipAPI.Domain.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 
@@ -31,5 +32,27 @@ public class AuthController : ControllerBase
 
         _logger.LogInformation("Login exitoso para el usuario {Email} con rol: {Role}", dto.Email, result.Value.Role);
         return Ok(result.Value);
+    }
+
+    [HttpPost("refresh")]
+    [AllowAnonymous]
+    [EnableRateLimiting("MediumLimit")]
+    public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequestDto dto, CancellationToken ct)
+    {
+        var result = await _authService.RefreshTokenAsync(dto.RefreshToken, ct);
+        if (result.IsFailure)
+            return Unauthorized(new { message = result.Error.Message });
+        return Ok(result.Value);
+    }
+
+    [HttpPost("logout")]
+    [Authorize]
+    [EnableRateLimiting("LightLimit")]
+    public async Task<IActionResult> Logout([FromBody] RefreshTokenRequestDto dto, CancellationToken ct)
+    {
+        var result = await _authService.LogoutAsync(dto.RefreshToken, ct);
+        if (result.IsFailure)
+            return BadRequest(new { message = result.Error.Message });
+        return NoContent();
     }
 }

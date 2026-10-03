@@ -4,5 +4,7 @@ public record LoginResponseDto(
     string Token,
     DateTime ExpiresIn,
     string Role,
-    Guid? MemberPublicId
+    Guid? MemberPublicId,
+    string RefreshToken,
+    DateTime RefreshTokenExpiration
 );

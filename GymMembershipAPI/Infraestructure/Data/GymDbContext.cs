@@ -20,6 +20,7 @@ public class GymDbContext : DbContext
     public DbSet<RegisterAccess> RegisterAccesses { get; set; }
     public DbSet<Membership> Memberships { get; set; }
     public DbSet<User> Users { get; set; }
+    public DbSet<RefreshToken> RefreshTokens { get; set; }
 
     // Configuraciones de relaciones y reglas con FLUENT API
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -90,10 +91,20 @@ public class GymDbContext : DbContext
             entity.Property(u => u.Role)
                 .HasConversion(new EnumToStringConverter<UserRole>())
                 .HasMaxLength(20);
-            
+
             entity.HasOne(e => e.Member)
                 .WithMany()
                 .HasForeignKey(e => e.MemberId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<RefreshToken>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.Token).IsUnique();
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
     }
